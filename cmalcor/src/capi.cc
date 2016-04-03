@@ -294,27 +294,34 @@ int CmAlcor_GetLED(int* error, int* mode, int* brightness, int* red, int* green,
                 {
                     size_t offset = uint16_t(settings[0x12]) | uint16_t((settings[0x13] << 8) & 0xFF00);
                     
-                    if(mode)
+                    if(offset + 3 < sizeof(settings))
                     {
-                        *mode = settings[offset + 0] & 0x0F;
-                        *mode = (*mode >= 0 && *mode <= 3? *mode : 1);
-                    }
+                        if(mode)
+                        {
+                            *mode = settings[offset + 0] & 0x0F;
+                            *mode = (*mode >= 0 && *mode <= 3? *mode : 1);
+                        }
 
-                    if(brightness)
-                    {
-                        *brightness = (settings[offset + 0] >> 4) & 0x0F;
-                        *brightness = (*brightness >= 0 && *brightness <= 10? *brightness : 10);
-                    }
+                        if(brightness)
+                        {
+                            *brightness = (settings[offset + 0] >> 4) & 0x0F;
+                            *brightness = (*brightness >= 0 && *brightness <= 10? *brightness : 10);
+                        }
                         
-                    if(red) *red = settings[offset + 1];
-                    if(green) *green = settings[offset + 2];
-                    if(blue) *blue = settings[offset + 3];
+                        if(red) *red = settings[offset + 1];
+                        if(green) *green = settings[offset + 2];
+                        if(blue) *blue = settings[offset + 3];
 
-                    return 1;
+                        return 1;
+                    }
+                    else
+                        set_error(error, CMALCOR_ERROR_BADSETTING);
                 }
-
-                // this is not a error, but there's no custom led configuration flashed on the device.
-                return 0;
+                else
+                {
+                    // this is not a error, but there's no custom led configuration flashed on the device.
+                    return 0;
+                }
             }
             else
                 set_error(error, CMALCOR_ERROR_BADFLASHREAD);

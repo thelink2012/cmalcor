@@ -496,11 +496,26 @@ namespace CmAlcorGUI
                 defaultBtn.Enabled = false;
                 startupHandlerBtn.Enabled = false;
 
+                Firmware.LedMode progMode = Firmware.LedMode.AlwaysOn;
+                int progBright = 0;
+                byte progR = 0, progG = 0, progB = 0;
+
                 Color color = ColorSlider.ToRgbColor();
+
+                if(Firmware.GetLED(ref progMode, ref progBright, ref progR, ref progG, ref progB))
+                {
+                    if(progMode == GetLedModeFromRadio() && progBright == ledBrightnessSlider.Value
+                    && color.R == progR && color.G == progG && color.B == progB)
+                    {
+                        Console.WriteLine("Not reprogramming, just applying.");
+                        Firmware.EnableCustomLED();
+                        return;
+                    }
+                }
+                
+                Console.WriteLine("Reprogramming...");
                 await Firmware.SetLEDAsync(GetLedModeFromRadio(), ledBrightnessSlider.Value, color.R, color.G, color.B);
-
                 Firmware.EnableCustomLED();
-
             }
             catch(FirmwareException ex)
             {

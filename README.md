@@ -2,13 +2,13 @@ CoolerMaster has a nice mouse for the price range, the CM Storm Alcor. However, 
 
 Fortunately, it's not a device limitation: After reversing into the firmware, between the many things discovered, I found out that the firmware for the Alcor and the Mizar is the same. And, more than that, how to set the LED color to any RGB color at runtime.
 
-I hope this is useful for the Alcor owners. I specially went after this because the brightness of any color except the red wasn't really confortable for my eyes.
+I hope this is useful for the Alcor owners. I specially went after this because the brightness of any of the predefined colors except the red wasn't really confortable for my eyes.
 
 ## Installation
 
 ### Option 1: Binary
 
-Easiest way to install is by downloading the binaries in the Release page.
+Easiest way to install is by downloading the binaries in the [Release page](https://github.com/thelink2012/cmalcor/releases).
 
 You may need [.NET Framework 4.5](https://www.microsoft.com/pt-br/download/details.aspx?id=30653) to run the GUI.
 
@@ -22,10 +22,12 @@ Run it from the Visual Studio Command Prompt, plus you also need [ILMerge](https
 
 ![CmAlcorGUI](http://i.imgur.com/ZpXAZWM.png)
 
+_Not the most beautiful GUI you can think of._
+
  + Select the color, brightness and LED mode you want, then click **Apply**, the changes will be made immediately.
  + By clicking in **Default** you'll get the default behaviour of the Alcor _(fixed colors on certain DPI)_.
  + Due to firmware limitations, the color is not restored when the mouse is turned on again, thus by using the **Restore LED Color On Windows Startup** you can put a task that applies the color, already in the mouse memory, on Windows startup.
- + You may store your own colors for future use at the secondary pallete on the right as well. Do note those are stored on the filesystem, not on the mouse memory. The primary pallete are the selectable colors for the Mizar.
+ + You may store your own colors for future use at the secondary pallete on the right. Do note those are stored on the filesystem, not on the mouse memory. The primary pallete are the selectable colors for the Mizar.
 
 Notice that some colors aren't exactly the same on the physical LED. For example, the last color on the primary pallete is the color used for *white* in the Mizar Software and on some Alcor Firmwares, even though it's not really RGB white.
 
@@ -45,7 +47,7 @@ So, to erase the settings from the flash memory, you can run the following comma
 
 ### 2. Flash Endurance
 
-The settings are stored in a flash memory embedded on the microcontroller, and, as you may know, the amount of program/erase cycles is finite.
+The settings are stored in a flash memory embedded on the microcontroller, and, as you may know, the amount of program/erase cycles on Flash memory is finite.
 
 According to the documentation of the MCU used both by the Mizar and the Alcor, its flash memory supports at least 20000 P/E cycles before failure, that seems quite big, but I'd still recommend being careful on how many times you reprogram the LED.
 

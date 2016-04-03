@@ -72,6 +72,8 @@ extern "C" {
 #define CMALCOR_ERROR_BADFLASHREAD      (-13)
 /// Couldn't complete operation because there's no LED configuration programmed on the device.
 #define CMALCOR_ERROR_NOLEDCONFIG       (-14)
+/// The settings on the mouse are ill-formed (most likely offsets out of range).
+#define CMALCOR_ERROR_BADSETTING        (-15)
 
 
 /*
