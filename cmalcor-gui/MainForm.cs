@@ -173,16 +173,20 @@ namespace CmAlcorGUI
             
             try
             {
-                Directory.CreateDirectory(alcorData);
+                // avoid saving settings if no user color has been set
+                if(!colorGrid1.CustomColors.All(c => c == Color.White || c == Color.Black))
+                {
+                    Directory.CreateDirectory(alcorData);
                 
-                var appSettings = new AppSettings();
-                appSettings.customColors = colorGrid1.CustomColors.ToList();
+                    var appSettings = new AppSettings();
+                    appSettings.customColors = colorGrid1.CustomColors.ToList();
 
-			    using (Stream stream = File.Open(path, FileMode.Create))
-			    {
-			        BinaryFormatter fmt = new BinaryFormatter();
-			        fmt.Serialize(stream, appSettings);
-			    }
+			        using (Stream stream = File.Open(path, FileMode.Create))
+			        {
+			            BinaryFormatter fmt = new BinaryFormatter();
+			            fmt.Serialize(stream, appSettings);
+			        }
+                }
             }
             catch(IOException)
             {
