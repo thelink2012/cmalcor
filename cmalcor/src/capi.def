@@ -1,0 +1,3 @@
+LIBRARY cmalcor
+EXPORTS
+    CmAlcor_EpEnableCustomLED = CmAlcor_EpEnableCustomLED
