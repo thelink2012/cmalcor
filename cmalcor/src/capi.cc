@@ -195,7 +195,7 @@ int CmAlcor_DisableCustomLED(int* error)
 
     if(auto alcor = GetFirmware(error))
     {
-        if(alcor.DoUnk84_1())
+        if(alcor.DoUnk82(false) && alcor.DoUnk84_1())
             return 1;
         else
             set_error(error, CMALCOR_ERROR_IOERROR);
@@ -272,13 +272,6 @@ CMALCOR_API
 int CmAlcor_GetLED(int* error, int* mode, int* brightness, int* red, int* green, int* blue)
 {
     clear_error(error);
-
-    if(mode == nullptr || brightness == nullptr
-    || red == nullptr || green == nullptr || blue == nullptr)
-    {
-        set_error(error, CMALCOR_ERROR_INVALIDPARAM);
-        return 0;
-    }
 
     if(auto alcor = GetFirmware(error))
     {

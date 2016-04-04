@@ -43,7 +43,7 @@ struct AppException : std::runtime_error
     {}
 };
 
-int verify(int error)
+void verify(int error)
 {
     if(error != CMALCOR_ERROR_NOERROR)
     {
@@ -59,7 +59,6 @@ int verify(int error)
         }
         throw AppException("Unknown error");
     }
-    return 0; // don't add anything to the bits when bitwise ORed!
 }
 
 void verify_address(uint32_t begin, uint32_t end)
@@ -98,7 +97,8 @@ int main(int argc, char* argv[])
         }
         else if(args["firmware-version"].asBool())
         {
-            int version = CmAlcor_GetFirmwareVersion(&error) | verify(error);
+            int version = CmAlcor_GetFirmwareVersion(&error);
+            verify(error);
             printf("%d.%d.%d.%d\n", (version >> 12) & 0xF, (version >> 8) & 0xF, (version >> 4) & 0xF, (version >> 0) & 0xF);
         }
         else if(args["memory-read"].asBool())
