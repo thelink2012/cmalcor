@@ -15,16 +15,26 @@ if %errorlevel% neq 0 exit /b %errorlevel%
 cd ..
 
 mkdir bin
+
+copy /y /d "cmalcor\bin\cmalcor.exe" "bin\"
 copy /y /d "cmalcor\bin\cmalcor.dll" "bin\"
 ilmerge /targetplatform:v4 /out:bin/CmAlcorGUI.exe "cmalcor-gui/bin/Release/CmAlcorGUI.exe" "cmalcor-gui/bin/Release/Cyotek.Windows.Forms.ColorPicker.dll"
 copy /y /d "cmalcor-gui\bin\Release\DarkUI.dll" "bin\"
 copy /y /d "cmalcor-gui\bin\Release\CmAlcorGUI.exe.config" "bin\"
-copy /y /d README.md bin\readme.txt
 del bin\CmAlcorGUI.pdb
-:: Build license file
+
+echo Better viewed on GitHub: https://github.com/thelink2012/cmalcor/blob/master/README.md > bin/readme.txt
+echo. >> bin/readme.txt
+type README.md >> bin/readme.txt
+
 echo =================== https://github.com/thelink2012/cmalcor =================== > bin/license.txt
 echo. >> bin/license.txt
 type LICENSE >> bin/license.txt
+echo. >> bin/license.txt
+echo. >> bin/license.txt
+echo =================== https://github.com/docopt/docopt.cpp =================== >> bin/license.txt
+echo. >> bin/license.txt
+type cmalcor\deps\docopt\LICENSE-MIT >> bin/license.txt
 echo. >> bin/license.txt
 echo. >> bin/license.txt
 echo ========= https://github.com/cyotek/Cyotek.Windows.Forms.ColorPicker ========= >> bin/license.txt
