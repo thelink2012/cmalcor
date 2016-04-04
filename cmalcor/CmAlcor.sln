@@ -1,5 +1,7 @@
 ﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2015
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cmalcor-cli", "cmalcor-cli.vcxproj", "{CBB18BD5-3767-04CB-C05B-FEA12C10FBCE}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cmalcor", "cmalcor.vcxproj", "{469EDFCD-B27D-5E69-BB95-E93F27F4C4CA}"
 EndProject
 Global
@@ -8,6 +10,10 @@ Global
 		Release|Win32 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CBB18BD5-3767-04CB-C05B-FEA12C10FBCE}.Debug|Win32.ActiveCfg = Debug|Win32
+		{CBB18BD5-3767-04CB-C05B-FEA12C10FBCE}.Debug|Win32.Build.0 = Debug|Win32
+		{CBB18BD5-3767-04CB-C05B-FEA12C10FBCE}.Release|Win32.ActiveCfg = Release|Win32
+		{CBB18BD5-3767-04CB-C05B-FEA12C10FBCE}.Release|Win32.Build.0 = Release|Win32
 		{469EDFCD-B27D-5E69-BB95-E93F27F4C4CA}.Debug|Win32.ActiveCfg = Debug|Win32
 		{469EDFCD-B27D-5E69-BB95-E93F27F4C4CA}.Debug|Win32.Build.0 = Debug|Win32
 		{469EDFCD-B27D-5E69-BB95-E93F27F4C4CA}.Release|Win32.ActiveCfg = Release|Win32

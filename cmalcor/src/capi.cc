@@ -12,7 +12,7 @@ void CALLBACK CmAlcor_EpEnableCustomLED(HWND, HINSTANCE, LPCSTR, int);
 
 #endif
 
-// Address of the settings in the mouse flash memory.
+// Address of the settings in the mouse flash memory (not complete, only necessary area).
 static const uintptr_t addr_settings_begin = 0xD800;
 static const uintptr_t addr_settings_end   = 0xD8FF;
 
@@ -365,3 +365,89 @@ void CALLBACK CmAlcor_EpEnableCustomLED(HWND, HINSTANCE, LPCSTR, int)
     CmAlcor_EnableCustomLED(nullptr);
 }
 #endif
+
+
+template<size_t N>
+static constexpr std::pair<const char*, size_t> SzArray(const char (&p)[N])
+{
+    return std::make_pair(p, N);
+}
+
+CMALCOR_API
+int CmAlcor_ErrorToString(int error, char* buffer, size_t max_size)
+{
+    // find: \/\/\/ (.*)\n#define ([_A-Z0-9]+).*
+    // replace: case $2:\n    msg = "$1";\n    break;
+
+    std::pair<const char*, size_t> msg(nullptr, 0);
+
+    switch(error)
+    {
+        case CMALCOR_ERROR_NOERROR:
+            msg = SzArray("No error.");
+            break;
+        case CMALCOR_ERROR_UNKNOWN:
+            msg = SzArray("Unknown error.");
+            break;
+        case CMALCOR_ERROR_INVALIDPARAM:
+            msg = SzArray("An invalid parameter was passed to the function.");
+            break;
+        case CMALCOR_ERROR_NODEVICE:
+            msg = SzArray("Device is not connected on the system.");
+            break;
+        case CMALCOR_ERROR_DEVICELOCKED:
+            msg = SzArray("Device is currently locked (doing some other firmware operation) by someone else.");
+            break;
+        case CMALCOR_ERROR_BADSTATE:
+            msg = SzArray("Device firmware IO is in a bad state.");
+            break;
+        case CMALCOR_ERROR_IOERROR:
+            msg = SzArray("Generic communication error with the device.");
+            break;
+        case CMALCOR_ERROR_BADUNSAFEGUARD:
+            msg = SzArray("Failed to trigger the unsafe operations flag.");
+            break;
+        case CMALCOR_ERROR_BADFLASHERASE:
+            msg = SzArray("Failed to flash erase the device.");
+            break;
+        case CMALCOR_ERROR_BADFLASHPROGRAM:
+            msg = SzArray("Failed to program something into the device memory.");
+            break;
+        case CMALCOR_ERROR_BADFLASHCHECKSUM:
+            msg = SzArray("Failed to retrieve the checksum, from the device, for a write operation.");
+            break;
+        case CMALCOR_ERROR_BADCHECKSUM:
+            msg = SzArray("Checksum mismatch between the device and the host.");
+            break;
+        case CMALCOR_ERROR_BADFLASHTELL:
+            msg = SzArray("Failed to tell the device about the success of a flash programming operation.");
+            break;
+        case CMALCOR_ERROR_BADFLASHREAD:
+            msg = SzArray("Failed to read from the device memory.");
+            break;
+        case CMALCOR_ERROR_NOLEDCONFIG:
+            msg = SzArray("Couldn't complete operation because there's no LED configuration programmed on the device.");
+            break;
+        case CMALCOR_ERROR_BADSETTING:
+            msg = SzArray("The settings on the mouse are ill-formed (most likely offsets out of range).");
+            break;
+    }
+
+    if(msg.first)
+    {
+        if(buffer == nullptr)
+        {
+            return msg.second;
+        }
+        else
+        {
+            if(msg.second < max_size)
+            {
+                std::memcpy(buffer, msg.first, msg.second); // includes null terminator
+                return (int) msg.second;
+            }
+        }
+    }
+
+    return 0;
+}

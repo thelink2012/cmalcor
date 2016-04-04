@@ -41,9 +41,17 @@ Possible problems you may encounter (directly or indirectly) are listed down her
 
 There's no problem in leaving the LED color settings on memory. However, it may _(or may not)_ break your warranty with CoolerMaster to have custom settings on the Alcor memory if you send the mice back to them.
 
-So, to erase the settings from the flash memory, you can run the following command on the CLI interface:
+So, to erase the setting flash memory, run the following commands on the provided CLI program, do note it may take a while, **DON'T DISCONNECT THE MICE NOR CLOSE THE CLI** during the process.
 
-    TODO
+    cmalcor disable-custom-led
+    cmalcor flash-erase 0xD800 0x1F7FF --force
+    cmalcor memory-read 0xD800 0x1F7FF >flash.txt
+    
+After that, reconnect your mouse to re-enable the scroll wheel and the LED.
+
+It's highly recommended that **after** running `disable-custom-led` and **before** running `flash-erase`, you make physically sure (by looking at the mouse) that you are not getting any customized color / behaviour.
+
+You can make sure the contents were really erased by checking if the output `flash.txt` is purely `0xFF`.
 
 ### 2. Flash Endurance
 

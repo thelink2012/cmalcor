@@ -5,8 +5,9 @@
 
 // Uses C99/C++ comments, can't bother to replace them.
 
-#ifdef CMALCOR_COMPILING
+#if defined(CMALCOR_COMPILING) || defined(CMALCOR_COMPILING_CLI)
 #define CMALCOR_CAPI_VERSION            0x010000
+#define CMALCOR_CAPI_VERSION_STRING     "1.0.0"
 #endif
 
 /*
@@ -87,6 +88,17 @@ extern "C" {
 ///
 CMALCOR_API
 int CmAlcor_LibraryVersion();
+
+///
+/// Transforms a CMALCOR_ERROR_* into a string.
+/// 
+/// If `buffer` is null, returns the number of bytes required to store the string (including null terminator).
+/// If `buffer` isn't null, copies the message string into it and returns the number of bytes copied.
+///
+/// Returns 0 either if the buffer is too small or if `error` isn't a error constant.
+///
+CMALCOR_API
+int CmAlcor_ErrorToString(int error, char* buffer, size_t max_size);
 
 ///
 /// Returns 1 if the CM Storm Alcor mice is connected on the system, 0 otherwise.

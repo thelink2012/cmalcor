@@ -17,12 +17,10 @@ solution "CmAlcor"
     targetdir "bin"
     implibdir "bin"
 
-    startproject "cmalcor"
+    startproject "cmalcor-cli"
 
     flags {
         "StaticRuntime",
-        "NoImportLib",
-        "NoRTTI",
         "NoBufferSecurityCheck"
     }
 
@@ -30,6 +28,8 @@ solution "CmAlcor"
         "_CRT_SECURE_NO_WARNINGS",
         "_SCL_SECURE_NO_WARNINGS"
     }
+
+    includedirs { "include" }
 
     configuration "Debug*"
         flags { "Symbols" }
@@ -56,12 +56,28 @@ solution "CmAlcor"
             "src/**.def",
         }
 
-        includedirs { "include" }
+        excludes { "src/main.cpp" }
 
         links {
             "hid",
             "setupapi",
         }
+
+    project "cmalcor-cli"
+        language "C++"
+        kind "ConsoleApp"
+        targetname "cmalcor"
         
+        defines { "CMALCOR_COMPILING_CLI" }
 
+        flags { "NoPCH" }
 
+        files {
+            "src/main.cpp",
+            "deps/docopt/docopt.cpp",
+        }
+ 
+        includedirs { "deps/docopt/" }
+
+        links { "cmalcor" }
+        
