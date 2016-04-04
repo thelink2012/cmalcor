@@ -55,7 +55,7 @@ public:
     /// The actual purpose of this operation is unknown.
     ///
     /// Returns false on failure.
-    bool DoUnk82();
+    bool DoUnk82(bool enable_led = true); // TODO remove default param later
 
     /// The actual purpose of this operation is unknown.
     ///
