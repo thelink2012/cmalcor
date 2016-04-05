@@ -78,6 +78,13 @@ extern "C" {
 
 
 /*
+ * Library Compilation Flags
+ */
+#define CMALCOR_LIBFLAGS_DEBUG          (0x1)
+#define CMALCOR_LIBFLAGS_MIZARPATCH     (0x4)
+
+
+/*
  * Functions
  */
 
@@ -88,6 +95,14 @@ extern "C" {
 ///
 CMALCOR_API
 int CmAlcor_LibraryVersion();
+
+///
+/// Gets the compilation flags of this library.
+///
+/// See `CMALCOR_LIBFLAGS_*`.
+///
+CMALCOR_API
+int CmAlcor_LibraryFlags();
 
 ///
 /// Transforms a CMALCOR_ERROR_* into a string.
