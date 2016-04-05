@@ -35,9 +35,17 @@ static inline void clear_error(int* error)
     set_error(error, CMALCOR_ERROR_NOERROR);
 }
 
+static HidDevice GetDevice()
+{
+    if(auto newdev = HidDevice::ScanForDevice(0x2516, 0x2D)) // newer versions of the alcor firmware uses this PID/VID
+        return newdev;
+    else
+        return HidDevice::ScanForDevice(0x2516, 0x28);
+}
+
 static IoAlcorFirmware GetFirmware(int* error, bool safety_checks = true)
 {
-    auto device = HidDevice::ScanForDevice(0x2516, 0x2D);
+    auto device = GetDevice();
     if(device)
     {
         IoAlcorFirmware firmware(device);
@@ -79,7 +87,7 @@ int CmAlcor_LibraryVersion()
 CMALCOR_API
 int CmAlcor_IsMousePresent()
 {
-    return HidDevice::ScanForDevice(0x2516, 0x2D)? 1 : 0;
+    return GetDevice()? 1 : 0;
 }
 
 CMALCOR_API
