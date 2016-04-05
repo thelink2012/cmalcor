@@ -17,7 +17,7 @@ namespace CmAlcorGUI
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            if(true || Firmware.IsMousePresent())
+            if(Firmware.IsMousePresent())
             {
                 Application.Run(new MainForm());
             }

@@ -29,8 +29,8 @@ solution "CmAlcor"
 
     location( _OPTIONS["outdir"] )
     targetprefix "" -- no 'lib' prefix on gcc
-    targetdir "bin"
-    implibdir "bin"
+    targetdir (_OPTIONS["outdir"] .. '/' .. "bin")
+    implibdir (_OPTIONS["outdir"] .. '/' .. "bin")
 
     startproject "cmalcor-cli"
 
