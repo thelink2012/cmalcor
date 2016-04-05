@@ -4,6 +4,8 @@ Fortunately, it's not a device limitation: After reversing into the firmware, be
 
 I hope this is useful for the Alcor owners. I specially went after this because the brightness of any of the predefined colors except the red wasn't really confortable for my eyes.
 
+*This also works on the Mizar with the mizar_patch!*
+
 ## Installation
 
 ### Option 1: Binary

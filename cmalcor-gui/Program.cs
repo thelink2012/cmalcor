@@ -17,14 +17,15 @@ namespace CmAlcorGUI
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            if(Firmware.IsAlcorPresent())
+            if(Firmware.IsMousePresent())
             {
                 Application.Run(new MainForm());
             }
             else
             {
-                MessageBox.Show("The CM Storm Alcor mouse is not connected or couldn't be found.",
-                                "CmAlcorGUI", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                string message = String.Format("The CM Storm {0} mouse is not connected or couldn't be found.",
+                                               Firmware.IsLibraryForMizar()? "Mizar" : "Alcor");
+                MessageBox.Show(message, "CmAlcorGUI", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }

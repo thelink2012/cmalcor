@@ -86,8 +86,16 @@ namespace CmAlcorGUI
                 Color.FromArgb(0xFF, 0xDA, 0xAA),
             });
             
-            this.startupHandlerBtn.Enabled = !HasStartupHandlerInstalled();
-            
+            if(Firmware.IsLibraryForMizar())
+            {
+                this.startupHandlerBtn.Enabled = false;
+                this.startupHandlerBtn.Visible = false;
+            }
+            else
+            {
+                this.startupHandlerBtn.Enabled = !HasStartupHandlerInstalled();
+            }
+
             UpdateUIFromMouseMemory();
         }
         
@@ -210,10 +218,13 @@ namespace CmAlcorGUI
             if(libCmAlcor != IntPtr.Zero) // when doesn't exist or any other error
             {
                 IntPtr ptrLibraryVersion = NativeMethods.GetProcAddress(libCmAlcor, "CmAlcor_LibraryVersion");
-                if(ptrLibraryVersion != IntPtr.Zero)
+                IntPtr ptrLibraryFlags = NativeMethods.GetProcAddress(libCmAlcor, "CmAlcor_LibraryFlags");
+                if(ptrLibraryVersion != IntPtr.Zero && ptrLibraryFlags != IntPtr.Zero)
                 {
                     var programDataLibraryVersion = (Firmware.Delegate_CmAlcor_LibraryVersion) Marshal.GetDelegateForFunctionPointer(ptrLibraryVersion, typeof(Firmware.Delegate_CmAlcor_LibraryVersion));
-                    isOlder = (programDataLibraryVersion() < Firmware.LibraryVersion());
+                    var programDataLibraryFlags = (Firmware.Delegate_CmAlcor_LibraryFlags) Marshal.GetDelegateForFunctionPointer(ptrLibraryFlags, typeof(Firmware.Delegate_CmAlcor_LibraryFlags));
+                    isOlder = (programDataLibraryVersion() < Firmware.LibraryVersion())
+                                || (programDataLibraryFlags() != Firmware.LibraryFlags());
                 }
                 NativeMethods.FreeLibrary(libCmAlcor);
             }

@@ -31,7 +31,7 @@ bool IoAlcorFirmware::GetNumber2(uint32_t& out_2)
 
 bool IoAlcorFirmware::DoUnk82(bool enable_led)
 {
-    const Operation inst(Op::Unk82, true, enable_led? 1 : 0, 0);
+    const Operation inst(Op::Unk82, true, (enable_led? 1 : 0), 0);
     return IoPerform(inst);
 }
 

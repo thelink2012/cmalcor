@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace CmAlcorGUI
@@ -7,7 +8,7 @@ namespace CmAlcorGUI
     public class FirmwareException : Exception
     {
         public FirmwareException(int error)
-            : base(String.Format("Firmware call failed with error code: {0}.", error))
+            : base(String.Format("{0}", Firmware.ErrorToString(error)))
         {
         }
     }
@@ -36,9 +37,40 @@ namespace CmAlcorGUI
         }
 
         /// <summary>
+        /// Gets the compilation flags of the unmanaged library (cmalcor.dll).
+        /// </summary>
+        public static int LibraryFlags()
+        {
+            return CmAlcor_LibraryFlags();
+        }
+
+        /// <summary>
+        /// Gets the error message from a error id.
+        /// </summary>
+        /// <returns>Returns the error message string for error, or `error.ToString()` if anything wrong happens on the call.</returns>
+        public static string ErrorToString(int error)
+        {
+            int capacity = 1024;
+            var stringBuilder = new StringBuilder(capacity);
+            if(CmAlcor_ErrorToString(error, stringBuilder, new UIntPtr((uint)capacity - 4)) != 0)
+            {
+                return stringBuilder.ToString();
+            }
+            return error.ToString();
+        }
+
+        /// <summary>
+        /// Whether the library was compiled for the CM Storm Mizar.
+        /// </summary>
+        public static bool IsLibraryForMizar()
+        {
+            return (LibraryFlags() & 0x4) != 0;
+        }
+
+        /// <summary>
         /// Checks whether the mouse is connected on the computer.
         /// </summary>
-        public static bool IsAlcorPresent()
+        public static bool IsMousePresent()
         {
             return CmAlcor_IsMousePresent() != 0;
         }
@@ -135,6 +167,12 @@ namespace CmAlcorGUI
         private static extern int CmAlcor_LibraryVersion();
 
         [DllImport("cmalcor.dll", CallingConvention = CallingConvention.Cdecl)]
+        private static extern int CmAlcor_LibraryFlags();
+
+        [DllImport("cmalcor.dll", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        private static extern int CmAlcor_ErrorToString(int error, StringBuilder output, UIntPtr max_output);
+
+        [DllImport("cmalcor.dll", CallingConvention = CallingConvention.Cdecl)]
         private static extern int CmAlcor_IsMousePresent();
 
         [DllImport("cmalcor.dll", CallingConvention = CallingConvention.Cdecl)]
@@ -154,6 +192,9 @@ namespace CmAlcorGUI
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         public delegate int Delegate_CmAlcor_LibraryVersion();
+
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        public delegate int Delegate_CmAlcor_LibraryFlags();
 
         #endregion
     }

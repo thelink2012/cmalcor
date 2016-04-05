@@ -3,6 +3,7 @@
 /cmalcor-gui/obj/
 /cmalcor/bin/
 /cmalcor/obj/
+/cmalcor/build_temp/
 
 #################
 ## C++
