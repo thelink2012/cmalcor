@@ -6,6 +6,20 @@
     Options and Actions
 --]]
 
+newoption {
+    trigger     = "outdir",
+    value       = "path",
+    description = "Output directory for the build files"
+}
+if not _OPTIONS["outdir"] then
+    _OPTIONS["outdir"] = "build"
+end
+
+newoption {
+    trigger     = "mizar",
+    description = "Makes a project that builds the Mizar based library"
+}
+
 --[[
     The Solution
 --]]
@@ -13,6 +27,7 @@ solution "CmAlcor"
 
     configurations { "Release", "Debug" }
 
+    location( _OPTIONS["outdir"] )
     targetprefix "" -- no 'lib' prefix on gcc
     targetdir "bin"
     implibdir "bin"
@@ -28,6 +43,10 @@ solution "CmAlcor"
         "_CRT_SECURE_NO_WARNINGS",
         "_SCL_SECURE_NO_WARNINGS"
     }
+
+    if _OPTIONS["mizar"] then
+        defines { "MIZAR_PATCH=1" }
+    end
 
     includedirs { "include" }
 
