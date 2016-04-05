@@ -23,13 +23,6 @@ void CALLBACK CmAlcor_EpEnableCustomLED(HWND, HINSTANCE, LPCSTR, int);
 
 #endif
 
-// Address of the settings in the mouse flash memory (not complete, only necessary area).
-static const uintptr_t addr_settings_begin = 0xD800;
-static const uintptr_t addr_settings_end   = 0xD8FF;
-
-// Double check!
-static_assert(addr_settings_begin == 0xD700+0x100, "");
-static_assert(addr_settings_end == 0xD700+0x200-1, "");
 
 /*
  * Helpers
@@ -76,7 +69,7 @@ static IoAlcorFirmware GetFirmware(int* error, bool safety_checks = true)
 static bool ValidateSettingOffsets(const uint8_t* settings)
 {
     constexpr size_t check_beg = 0xC;
-    constexpr size_t check_end = 0x20; // exclusive
+    constexpr size_t check_end = MIZAR_PATCH? 0x1A : 0x20; // (end is exclusive)
     return std::memcmp(settings + check_beg, default_settings + check_beg, check_end - check_beg) == 0;
 }
 
@@ -92,6 +85,19 @@ CMALCOR_API
 int CmAlcor_LibraryVersion()
 {
     return CMALCOR_CAPI_VERSION;
+}
+
+CMALCOR_API
+int CmAlcor_LibraryFlags()
+{
+    int flags = 0;
+#if !defined(NDEBUG)
+    flags |= CMALCOR_LIBFLAGS_DEBUG;
+#endif
+#if MIZAR_PATCH
+    flags |= CMALCOR_LIBFLAGS_MIZARPATCH;
+#endif
+    return flags;
 }
 
 CMALCOR_API
@@ -241,16 +247,29 @@ int CmAlcor_SetLED(int* error, int mode, int brightness, int red, int green, int
         return 0;
     }
 
-    uint8_t settings[256];
+    // On Mizar we need to read then rewrite the entire setting area because it's mostly full of data,
+    // on Alcor we only need to write (not even read) the needed area.
+    constexpr uint32_t addr_settings_begin = MIZAR_PATCH? 0xD800 : 0xD800;
+    constexpr uint32_t addr_settings_end = MIZAR_PATCH? 0xDBFF : 0xD8FF;
+
+    uint8_t settings[MIZAR_PATCH? 0x400 : 0x100];
     uint16_t host_checksum, device_checksum;
 
     if(MIZAR_PATCH)
     {
+        if(sizeof(settings) != 0x400)
+        {
+            // should never happen
+            set_error(error, CMALCOR_ERROR_UNKNOWN);
+            return 0;
+        }
+
         static_assert(sizeof(settings) == (addr_settings_end - addr_settings_begin) + 1, "");
         if(!CmAlcor_MemoryRead(error, addr_settings_begin, addr_settings_end, settings))
             return 0;
 
-        if(settings[0] == 0xFF && settings[1] == 0xFF && settings[2] == 0xA5 && settings[3] == 0xA5)
+        // already contains settings programmed in?
+        if(settings[2] == 0xA5 && settings[3] == 0xA5)
         {
             // erase magic for the firmware to restore on FlashTellSuccessProgramming.
             settings[0] = settings[1] = 0xFF;
@@ -264,11 +283,20 @@ int CmAlcor_SetLED(int* error, int mode, int brightness, int red, int green, int
         }
         else
         {
+            std::memset(settings, 0xFF, sizeof(settings));
             std::copy(std::begin(default_settings), std::end(default_settings), settings);
         }
     }
     else
     {
+        if(sizeof(settings) != 256)
+        {
+            // should never happen
+            set_error(error, CMALCOR_ERROR_UNKNOWN);
+            return 0;
+        }
+
+        std::memset(settings, 0xFF, sizeof(settings));
         std::copy(std::begin(default_settings), std::end(default_settings), settings);
     }
 
@@ -341,12 +369,13 @@ int CmAlcor_GetLED(int* error, int* mode, int* brightness, int* red, int* green,
         IoAlcorFirmware::UnsafeGuard guard(alcor);
         if(guard)
         {
-            uint8_t settings[256];
+            uint8_t settings[0x100]; // only needs top area, where it contains the led data
 
-            static_assert(sizeof(settings) == (addr_settings_end - addr_settings_begin) + 1, "");
-            if(alcor.MemoryRead(addr_settings_begin, addr_settings_end, settings))
+            static_assert(sizeof(settings) == (0xD8FF - 0xD800) + 1, "");
+            if(alcor.MemoryRead(0xD800, 0xD8FF, settings))
             {
-                if(settings[0] == 0xFF && settings[1] == 0xFF && settings[2] == 0xA5 && settings[3] == 0xA5)
+                // already contains settings?
+                if(settings[2] == 0xA5 && settings[3] == 0xA5)
                 {
                     size_t offset = uint16_t(settings[0x12]) | uint16_t((settings[0x13] << 8) & 0xFF00);
                     
@@ -400,9 +429,9 @@ int CmAlcor_HasLEDConfig(int* error)
         if(guard)
         {
             uint8_t magic[4];
-            if(alcor.MemoryRead(addr_settings_begin, addr_settings_begin + 3, magic))
+            if(alcor.MemoryRead(0xD800, 0xD803, magic))
             {
-                return (magic[0] == 0xFF && magic[1] == 0xFF && magic[2] == 0xA5 && magic[3] == 0xA5);
+                return (magic[2] == 0xA5 && magic[3] == 0xA5);
             }
             else
                 set_error(error, CMALCOR_ERROR_BADFLASHREAD);
