@@ -12,7 +12,7 @@ newoption {
     description = "Output directory for the build files"
 }
 if not _OPTIONS["outdir"] then
-    _OPTIONS["outdir"] = "build"
+    _OPTIONS["outdir"] = "."
 end
 
 newoption {
