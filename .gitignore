@@ -4,6 +4,8 @@
 /cmalcor/bin/
 /cmalcor/obj/
 /cmalcor/build_temp/
+*.db
+*.opendb
 
 #################
 ## C++

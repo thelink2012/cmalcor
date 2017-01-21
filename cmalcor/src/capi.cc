@@ -42,7 +42,7 @@ static HidDevice GetDevice()
     if(auto newdev = HidDevice::ScanForDevice(0x2516, 0x2D)) // newer versions of the alcor firmware uses this PID/VID
         return newdev;
     else
-        return HidDevice();//return HidDevice::ScanForDevice(0x2516, 0x28); -- still needs someone to test
+        return HidDevice::ScanForDevice(0x2516, 0x28);
 #endif
 }
 
