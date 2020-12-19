@@ -1,6 +1,6 @@
 #pragma once
 #include "hid.hpp"
-#include <cstring> // std::memset/std::memcpy
+#include <cstring>
 
 class IoAlcorFirmware
 {

@@ -1,8 +1,7 @@
-#define WIN32_LEAN_AND_MEAN
 #include "io_alcor.hpp"
 #include <algorithm>
-#include <thread> // Sleep replacement std::this_thread::sleep_for
-#include <chrono> // std::chrono::seconds
+#include <thread>
+#include <chrono>
 
 bool IoAlcorFirmware::GetVersion(uint16_t& out_version)
 {

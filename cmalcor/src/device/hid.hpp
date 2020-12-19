@@ -40,12 +40,15 @@ private:
         assert(!!*this);
     }
 
+    IoHandle OpenWin32() const;
+    IoHandle OpenPosix() const;
+
 public:
     /// Open device ready for I/O.
     class IoHandle
     {
     public:
-        IoHandle() : hDev(0), hLock(0)
+        IoHandle() : pDev(0), fdLock(-1)
         {}
 
         IoHandle(const IoHandle&) = delete;
@@ -58,10 +61,10 @@ public:
 
         IoHandle& operator=(IoHandle&& rhs)
         {
-            this->hDev = rhs.hDev;
-            this->hLock = rhs.hLock;
-            rhs.hDev = 0;
-            rhs.hLock = 0;
+            this->pDev = rhs.pDev;
+            this->fdLock = rhs.fdLock;
+            rhs.pDev = 0;
+            rhs.fdLock = FdHandle(-1);
             return *this;
         }
 
@@ -81,27 +84,20 @@ public:
     protected:
         friend class HidDevice;
         #ifdef _WIN32
-        using HANDLE = void*;
+        using FdHandle = void*;
         #else
-        using HANDLE = int;
+        using FdHandle = int;
         #endif
 
-        hid_device *hDev;
-        HANDLE hLock;
+        hid_device *pDev;
+        FdHandle fdLock;
 
-        explicit IoHandle(hid_device *hDev, HANDLE hLock) :
-            hDev(hDev), hLock(hLock)
+        explicit IoHandle(hid_device *pDev, FdHandle fdLock) :
+            pDev(pDev), fdLock(fdLock)
         {}
+
+    private:
+	void CloseWin32Lock();
+	void ClosePosixLock();
     };
-    
-    // Singleton for hid library
-	class HidLibSingle
-	{
-	
-		HidLibSingle();
-	
-	public:
-		static HidLibSingle &hidlib();
-		~HidLibSingle();
-	};
 };

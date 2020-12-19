@@ -481,7 +481,7 @@ int CmAlcor_ErrorToString(int error, char* buffer, size_t max_size)
             msg = SzArray("Device is not connected on the system.");
             break;
         case CMALCOR_ERROR_DEVICELOCKED:
-            msg = SzArray("Device is currently locked (doing some other firmware operation) by someone else.");
+            msg = SzArray("User has insufficient permission to access device or it's locked by another process.");
             break;
         case CMALCOR_ERROR_BADSTATE:
             msg = SzArray("Device firmware IO is in a bad state.");

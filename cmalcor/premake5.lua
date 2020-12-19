@@ -26,11 +26,13 @@ newoption {
 solution "CmAlcor"
 
     configurations { "Release", "Debug" }
+    cppdialect "C++17"
 
     location( _OPTIONS["outdir"] )
     targetprefix "" -- no 'lib' prefix on gcc
     targetdir (_OPTIONS["outdir"] .. '/' .. "bin")
     implibdir (_OPTIONS["outdir"] .. '/' .. "bin")
+
 
     startproject "cmalcor-cli"
 
@@ -77,9 +79,11 @@ solution "CmAlcor"
 
         excludes { "src/main.cpp" }
 
-        links {
-            "hidapi-hidraw",
-        }
+        filter "system:windows"
+            links "hidapi"
+            
+        filter "system:linux"
+            links "hidapi-hidraw"
 
     project "cmalcor-cli"
         language "C++"
