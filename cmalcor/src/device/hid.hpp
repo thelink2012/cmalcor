@@ -1,4 +1,5 @@
 #pragma once
+#include <hidapi/hidapi.h>
 #include <cassert>
 #include <cstdint>
 #include <string>
@@ -30,10 +31,10 @@ public:
     static HidDevice ScanForDevice(uint16_t vendor, uint16_t product);
 
 private:
-    std::wstring device;
+    std::string device;
     uint16_t vendor, product;
 
-    explicit HidDevice(std::wstring device_path, uint16_t vendor, uint16_t product) :
+    explicit HidDevice(std::string device_path, uint16_t vendor, uint16_t product) :
         device(std::move(device_path)), vendor(vendor), product(product)
     {
         assert(!!*this);
@@ -79,13 +80,28 @@ public:
 
     protected:
         friend class HidDevice;
+        #ifdef _WIN32
         using HANDLE = void*;
+        #else
+        using HANDLE = int;
+        #endif
 
-        HANDLE hDev;
+        hid_device *hDev;
         HANDLE hLock;
 
-        explicit IoHandle(HANDLE hDev, HANDLE hLock) :
+        explicit IoHandle(hid_device *hDev, HANDLE hLock) :
             hDev(hDev), hLock(hLock)
         {}
     };
+    
+    // Singleton for hid library
+	class HidLibSingle
+	{
+	
+		HidLibSingle();
+	
+	public:
+		static HidLibSingle &hidlib();
+		~HidLibSingle();
+	};
 };

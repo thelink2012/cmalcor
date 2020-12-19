@@ -1,17 +1,43 @@
 #define WIN32_LEAN_AND_MEAN
 #include "hid.hpp"
 #include <vector>
-#include <windows.h>
-#include <hidsdi.h>
-#include <setupapi.h>
-#include <shlobj.h>
+#include <iterator>
+#include <cstring>
+
+#ifdef _WIN32
+#include <Windows.h>
+#include <SetupAPI.h>
+#include <ShlObj.h>
+#else
+#include <sys/file.h> // flock(2)
+#include <unistd.h> // close(2)
+constexpr int INVALID_HANDLE_VALUE = -1;
+#endif
+
+HidDevice::HidLibSingle::HidLibSingle()
+{
+	hid_init();
+}
+
+HidDevice::HidLibSingle::~HidLibSingle()
+{
+	hid_exit();
+}
+
+HidDevice::HidLibSingle &HidDevice::HidLibSingle::hidlib()
+{
+	static HidLibSingle single;
+	return single;
+}
 
 auto HidDevice::Open() const -> IoHandle
 {
-    static_assert(std::is_same<::HANDLE, IoHandle::HANDLE>::value, "");
-
+    //static_assert(std::is_same<::HANDLE, IoHandle::HANDLE>::value, "");
+    
     if(*this)
     {
+        IoHandle result;
+        #ifdef _WIN32
         wchar_t lockpath[MAX_PATH];
         wchar_t devid[64];
 
@@ -23,69 +49,47 @@ auto HidDevice::Open() const -> IoHandle
                 HANDLE hLock = CreateFileW(lockpath, GENERIC_READ | GENERIC_WRITE, 0 /*noshare*/, nullptr, OPEN_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, nullptr);
                 if(hLock != INVALID_HANDLE_VALUE)
                 {
-                    HANDLE hDev = CreateFileW(this->device.c_str(), 0, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, 0);
+                    hid_device *hDev = hid_open_path(this->device.c_str());
                     return IoHandle(hDev, hLock);
                 }
             }
         }
+        #else
+        // Assuming is POSIX
+        char lockpath[256] = { 0 };
+        if (snprintf(lockpath, std::size(lockpath), "/run/lock/device_hid_%X_%X.lock", vendor, product) > 0)
+        {
+            int hLock = open(lockpath, O_RDWR | O_CREAT, S_IRWXU | S_IRGRP | S_IWGRP | S_IROTH);
+            
+            // fcntl works over every filesystem
+            struct flock lock;
+            memset(&lock, 0, sizeof(lock));
+            lock.l_type = F_WRLCK;
+            
+            if (fcntl(hLock, F_SETLKW, &lock) == 0)
+            {
+                hid_device *hDev = hid_open_path(this->device.c_str());
+                return IoHandle(hDev, hLock);
+            }
+        }
+        #endif
     }
     return IoHandle();
 }
 
 auto HidDevice::ScanForDevice(uint16_t vendor, uint16_t product) -> HidDevice
 {
+    HidLibSingle::hidlib();
     HidDevice output;
-    std::vector<uint8_t> buffer;
-    GUID guid;
-
-    HidD_GetHidGuid(&guid);
-
-    HDEVINFO hDevInfo = SetupDiGetClassDevsW(&guid, nullptr, nullptr, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
-    if(hDevInfo != INVALID_HANDLE_VALUE)
+    hid_device_info *hidenum = hid_enumerate(vendor, product);
+    
+    if (hidenum != nullptr)
     {
-        for(uint32_t i = 0; !output; ++i)
-        {
-            DWORD required_size;
-            SP_DEVICE_INTERFACE_DATA data;
-            data.cbSize = sizeof(data);
-
-            if(!SetupDiEnumDeviceInterfaces(hDevInfo, nullptr, &guid, i, &data))
-                break;
-
-            if(!SetupDiGetDeviceInterfaceDetailW(hDevInfo, &data, nullptr, 0, &required_size, nullptr)
-                && GetLastError() == ERROR_INSUFFICIENT_BUFFER)
-            {
-                if(buffer.size() < required_size)
-                    buffer.resize(required_size);
-
-                auto& detail = *reinterpret_cast<SP_DEVICE_INTERFACE_DETAIL_DATA_W*>(buffer.data());
-                detail.cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W);
-
-                if(SetupDiGetDeviceInterfaceDetailW(hDevInfo, &data, &detail, buffer.size(), nullptr, nullptr))
-                {
-                    HANDLE hDev = CreateFileW(detail.DevicePath, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, 0);
-                    if(hDev != INVALID_HANDLE_VALUE)
-                    {
-                        HIDD_ATTRIBUTES attrs;
-                        attrs.Size = sizeof(attrs);
-
-                        if(HidD_GetAttributes(hDev, &attrs))
-                        {
-                            if(attrs.VendorID == vendor && attrs.ProductID == product)
-                            {
-                                output = HidDevice(detail.DevicePath, attrs.VendorID, attrs.ProductID);
-                            }
-                        }
-
-                        CloseHandle(hDev);
-                    }
-                }
-            }
-        }
-
-        SetupDiDestroyDeviceInfoList(hDevInfo);
+        output = HidDevice(hidenum->path == nullptr? "" : hidenum->path, hidenum->vendor_id, hidenum->product_id);
+        
+        hid_free_enumeration(hidenum);
     }
-
+    
     return output;
 }
 
@@ -93,26 +97,49 @@ HidDevice::IoHandle::~IoHandle()
 {
     if(*this)
     {
-        CloseHandle(hDev);
+        hid_close(hDev);
+        //CloseHandle(hDev);
 
         if(hLock != 0 && hLock != INVALID_HANDLE_VALUE)
         {
+            #ifdef _WIN32
             CloseHandle(hLock);
+            #else
+            struct flock lock;
+            memset(&lock, 0, sizeof(lock));
+            lock.l_type = F_UNLCK;
+            
+            fcntl(hLock, F_SETLKW, &lock);
+            
+            char path[256] = { 0 };
+            
+            // Remove lockfile from filesystem
+            if (snprintf(path, std::size(path), "/proc/self/fd/%d", hLock) > 0)
+            {
+                if (readlink(path, path, std::size(path)) > 0)
+                {
+                    unlink(path);
+                }
+            } else path[0] = 0;
+            
+            // Close handle
+            close(hLock);
+            #endif
         }
     }
 }
 
 HidDevice::IoHandle::operator bool() const
 {
-    return (hDev != 0 && hDev != INVALID_HANDLE_VALUE);
+    return (hDev != nullptr);
 }
 
 bool HidDevice::IoHandle::GetFeature(void* buffer, size_t size) const
 {
-    return !!HidD_GetFeature(hDev, buffer, size);
+    return hid_get_feature_report(hDev, reinterpret_cast<uint8_t*>(buffer), size) != -1;
 }
 
 bool HidDevice::IoHandle::SetFeature(const void* buffer, size_t size) const
 {
-    return !!HidD_SetFeature(hDev, (PVOID)(buffer), size);
+    return hid_send_feature_report(hDev, reinterpret_cast<const uint8_t*>(buffer), size) != -1;
 }

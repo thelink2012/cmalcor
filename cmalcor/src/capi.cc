@@ -526,7 +526,7 @@ int CmAlcor_ErrorToString(int error, char* buffer, size_t max_size)
         }
         else
         {
-            if(msg.second < max_size)
+            if(msg.second <= max_size)
             {
                 std::memcpy(buffer, msg.first, msg.second); // includes null terminator
                 return (int) msg.second;

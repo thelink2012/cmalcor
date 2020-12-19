@@ -1,7 +1,8 @@
 #define WIN32_LEAN_AND_MEAN
 #include "io_alcor.hpp"
 #include <algorithm>
-#include <windows.h> // Sleep
+#include <thread> // Sleep replacement std::this_thread::sleep_for
+#include <chrono> // std::chrono::seconds
 
 bool IoAlcorFirmware::GetVersion(uint16_t& out_version)
 {
@@ -313,7 +314,7 @@ bool IoAlcorFirmware::IoBytesInput(const Operation& inst, void* inbufv, size_t s
         {
             Operation outbuf;
 
-            Sleep(2);
+            std::this_thread::sleep_for(std::chrono::seconds(2));
 
             // Wait for input operation to complete
             if(IoRequestOutput(inst, outbuf) && IoWaitRequestOutput4(inst, outbuf))

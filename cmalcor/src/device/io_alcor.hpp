@@ -1,5 +1,6 @@
 #pragma once
 #include "hid.hpp"
+#include <cstring> // std::memset/std::memcpy
 
 class IoAlcorFirmware
 {
@@ -9,8 +10,8 @@ private:
 
     HidDevice::IoHandle io;
 
-    static const size_t feature_size = 65;
-    static const size_t bytes_step = feature_size - 1; // minus report id
+    static const uint32_t feature_size = 65;
+    static const uint32_t bytes_step = feature_size - 1; // minus report id
 
     static const uint8_t made_request = 0xFB;
     static const uint8_t success_request = 0xFA;

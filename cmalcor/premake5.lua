@@ -78,8 +78,7 @@ solution "CmAlcor"
         excludes { "src/main.cpp" }
 
         links {
-            "hid",
-            "setupapi",
+            "hidapi-hidraw",
         }
 
     project "cmalcor-cli"

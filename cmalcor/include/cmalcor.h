@@ -2,6 +2,7 @@
 #define CMALCOR_CAPI_H_
 #pragma once
 #include <cstdint>
+#include <cstring> // std::memset/std::memcpy/size_t
 
 // Uses C99/C++ comments, can't bother to replace them.
 
