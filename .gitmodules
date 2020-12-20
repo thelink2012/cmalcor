@@ -1,0 +1,3 @@
+[submodule "cmalcor/deps/docopt"]
+	path = cmalcor/deps/docopt
+	url = https://github.com/docopt/docopt.cpp

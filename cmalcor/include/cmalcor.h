@@ -1,13 +1,14 @@
 #ifndef CMALCOR_CAPI_H_
 #define CMALCOR_CAPI_H_
 #pragma once
-#include <cstdint>
+#include <stdint.h>
+#include <stddef.h>
 
 // Uses C99/C++ comments, can't bother to replace them.
 
 #if defined(CMALCOR_COMPILING) || defined(CMALCOR_COMPILING_CLI)
-#define CMALCOR_CAPI_VERSION            0x010101
-#define CMALCOR_CAPI_VERSION_STRING     "1.1.1"
+#define CMALCOR_CAPI_VERSION            0x010200
+#define CMALCOR_CAPI_VERSION_STRING     "1.2.0"
 #endif
 
 /*
@@ -51,7 +52,7 @@ extern "C" {
 #define CMALCOR_ERROR_INVALIDPARAM      (-2)
 /// Device is not connected on the system.
 #define CMALCOR_ERROR_NODEVICE          (-3)
-/// Device is currently locked (doing some other firmware operation) by someone else.
+/// User has insufficient permission to access device or it's locked by another process.
 #define CMALCOR_ERROR_DEVICELOCKED      (-4)
 /// Device firmware IO is in a bad state.
 #define CMALCOR_ERROR_BADSTATE          (-5)

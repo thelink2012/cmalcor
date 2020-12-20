@@ -26,22 +26,16 @@ newoption {
 solution "CmAlcor"
 
     configurations { "Release", "Debug" }
+    cppdialect "C++17"
 
     location( _OPTIONS["outdir"] )
-    targetprefix "" -- no 'lib' prefix on gcc
     targetdir (_OPTIONS["outdir"] .. '/' .. "bin")
     implibdir (_OPTIONS["outdir"] .. '/' .. "bin")
 
     startproject "cmalcor-cli"
 
     flags {
-        "StaticRuntime",
         "NoBufferSecurityCheck"
-    }
-
-    defines {
-        "_CRT_SECURE_NO_WARNINGS",
-        "_SCL_SECURE_NO_WARNINGS"
     }
 
     if _OPTIONS["mizar"] then
@@ -51,11 +45,19 @@ solution "CmAlcor"
     includedirs { "include" }
 
     configuration "Debug*"
-        flags { "Symbols" }
+        symbols "On"
         
     configuration "Release*"
         defines { "NDEBUG" }
         optimize "Speed"
+
+    filter "system:windows"
+        staticruntime "On"
+        targetprefix "" -- no 'lib' prefix on gcc
+        defines {
+            "_CRT_SECURE_NO_WARNINGS",
+            "_SCL_SECURE_NO_WARNINGS"
+        }
 
     project "cmalcor"
         language "C++"
@@ -77,10 +79,11 @@ solution "CmAlcor"
 
         excludes { "src/main.cpp" }
 
-        links {
-            "hid",
-            "setupapi",
-        }
+        filter "system:windows"
+            links {"hid", "setupapi"}
+            
+        filter "system:linux"
+            links "hidapi-hidraw"
 
     project "cmalcor-cli"
         language "C++"

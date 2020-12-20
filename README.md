@@ -10,15 +10,17 @@ I hope this is useful for the Alcor owners. I specially went after this because 
 
 ### Option 1: Binary
 
-Easiest way to install is by downloading the binaries in the [Release page](https://github.com/thelink2012/cmalcor/releases).
+Pre-compiled binaries for Windows are available in the [Releases page](https://github.com/thelink2012/cmalcor/releases).
 
-You may need [.NET Framework 4.5](https://www.microsoft.com/pt-br/download/details.aspx?id=30653) to run the GUI.
+You need [.NET Framework 4.5](https://www.microsoft.com/pt-br/download/details.aspx?id=30653) to run the GUI.
 
 ### Option 2: Building
 
-If, however, you wish to build the project manually, the `build-win32.bat` script is able to automate that.
+You may wish to build the project manually. Windows and Linux are supported.
 
-Run it from the Visual Studio Command Prompt, plus you also need [ILMerge](https://www.microsoft.com/en-us/download/details.aspx?id=17630) on PATH.
+For Windows, execute the `build-win32.bat` script in the root of this repository. Run it from the Visual Studio Command Prompt, You also need [ILMerge](https://www.microsoft.com/en-us/download/details.aspx?id=17630) on PATH.
+
+For Linux, `cmalcor-gui` is not supported, and interacting with the USB device is done through the `hidapi` package. Please make sure you have that installed on your system. Then `cd cmalcor` and use `premake5 gmake` to generate a Makefile which you can use to build by using `make`.
 
 ## Usage
 
