@@ -1,8 +1,8 @@
 CoolerMaster has a nice mouse for the price range, the CM Storm Alcor. However, unlike its brother, CM Storm Mizar, it does not have a software nor any means of changing the LED color.
 
-Fortunately, it's not a device limitation: After reversing into the firmware, between the many things discovered, I found out that the firmware for the Alcor and the Mizar is the same. And, more than that, how to set the LED color to any RGB color at runtime.
+Fortunately, it's not a device limitation: The firmware for the Alcor and Mizar are the same, therefore much like the Mizar, it's possible to set Alcor's LED color to any RGB color at runtime, by sending the correct commands through the USB device.
 
-I hope this is useful for the Alcor owners. I specially went after this because the brightness of any of the predefined colors except the red wasn't really confortable for my eyes.
+This application does just that. It supports Windows (GUI and CLI) and Linux (CLI only).
 
 *This also works on the Mizar with the mizar_patch!*
 
@@ -16,7 +16,7 @@ You need [.NET Framework 4.5](https://www.microsoft.com/pt-br/download/details.a
 
 ### Option 2: Building
 
-You may wish to build the project manually. Windows and Linux are supported.
+You may wish to build the project manually.
 
 For Windows, execute the `build-win32.bat` script in the root of this repository. Run it from the Visual Studio Command Prompt, You also need [ILMerge](https://www.microsoft.com/en-us/download/details.aspx?id=17630) on PATH.
 
@@ -26,12 +26,10 @@ For Linux, `cmalcor-gui` is not supported, and interacting with the USB device i
 
 ![CmAlcorGUI](http://i.imgur.com/ZpXAZWM.png)
 
-_Not the most beautiful GUI you can think of._
-
- + Select the color, brightness and LED mode you want, then click **Apply**, the changes will be made immediately.
+ + Select the color, brightness and LED mode you want, then click **Apply**, the changes will take effect immediately.
  + By clicking in **Default** you'll get the default behaviour of the Alcor _(fixed colors on certain DPI)_.
- + Due to firmware limitations, the color is not restored when the mouse is turned on again, thus by using the **Restore LED Color On Windows Startup** you can put a task that applies the color, already in the mouse memory, on Windows startup.
- + You may store your own colors for future use at the secondary pallete on the right. Do note those are stored on the filesystem, not on the mouse memory. The primary pallete are the selectable colors for the Mizar.
+ + Due to firmware limitations, the color is not restored when the mouse is turned on again, thus by using the **Restore LED Color On Windows Startup** you can install a task that applies the color on Windows startup.
+ + You may store your own colors for future use at the secondary pallete on the right. Do note those are stored on the filesystem, not on mouse memory. The primary pallete are the selectable colors for the Mizar.
 
 Notice that some colors aren't exactly the same on the physical LED. For example, the last color on the primary pallete is the color used for *white* in the Mizar Software and on some Alcor Firmwares, even though it's not really RGB white.
 
