@@ -5,12 +5,14 @@
 @echo off
 
 cd cmalcor
+del build
+del build_temp
 mkdir build_temp
-premake5 vs2015 && cd build && msbuild CmAlcor.sln /p:configuration=Release /p:platform=Win32 && cd ../..
+premake5 vs2019 && cd build && msbuild CmAlcor.sln /p:configuration=Release /p:platform=Win32 && cd ..
 if %errorlevel% neq 0 exit /b %errorlevel%
 move bin build_temp/alcor
 del build
-premake5 vs2015 --mizar && cd build && msbuild CmAlcor.sln /p:configuration=Release /p:platform=Win32 && cd ../..
+premake5 vs2019 --mizar && cd build && msbuild CmAlcor.sln /p:configuration=Release /p:platform=Win32 && cd ..
 if %errorlevel% neq 0 exit /b %errorlevel%
 move bin build_temp/mizar
 del build
@@ -24,11 +26,12 @@ cd ..
 mkdir bin
 mkdir bin\mizar_patch
 
+set ILMERGE_PATH=%USERPROFILE%\.nuget\packages\ilmerge\3.0.41\tools\net452
 copy /y /d "cmalcor\build_temp\alcor\cmalcor.exe" "bin\"
 copy /y /d "cmalcor\build_temp\alcor\cmalcor.dll" "bin\"
 copy /y /d "cmalcor\build_temp\mizar\cmalcor.exe" "bin\mizar_patch\"
 copy /y /d "cmalcor\build_temp\mizar\cmalcor.dll" "bin\mizar_patch\"
-ilmerge /targetplatform:v4 /out:bin/CmAlcorGUI.exe "cmalcor-gui/bin/Release/CmAlcorGUI.exe" "cmalcor-gui/bin/Release/Cyotek.Windows.Forms.ColorPicker.dll"
+%ILMERGE_PATH%\ilmerge.exe /targetplatform:v4 /out:bin/CmAlcorGUI.exe "cmalcor-gui/bin/Release/CmAlcorGUI.exe" "cmalcor-gui/bin/Release/Cyotek.Windows.Forms.ColorPicker.dll"
 copy /y /d "cmalcor-gui\bin\Release\DarkUI.dll" "bin\"
 copy /y /d "cmalcor-gui\bin\Release\CmAlcorGUI.exe.config" "bin\"
 del bin\CmAlcorGUI.pdb

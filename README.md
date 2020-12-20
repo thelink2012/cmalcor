@@ -18,7 +18,7 @@ You need [.NET Framework 4.5](https://www.microsoft.com/pt-br/download/details.a
 
 You may wish to build the project manually. Windows and Linux are supported.
 
-For Windows, execute the `build-win32.bat` script in the root of this repository. Run it from the Visual Studio Command Prompt, You also need [ILMerge](https://www.microsoft.com/en-us/download/details.aspx?id=17630) on PATH.
+For Windows, execute the `build-win32.bat` script in the root of this repository. Run it from the Visual Studio Command Prompt.
 
 For Linux, `cmalcor-gui` is not supported, and interacting with the USB device is done through the `hidapi` package. Please make sure you have that installed on your system. Then `cd cmalcor` and use `premake5 gmake` to generate a Makefile which you can use to build by using `make`.
 

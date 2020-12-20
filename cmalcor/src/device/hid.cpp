@@ -5,10 +5,12 @@
 #include <vector>
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
-#include <hidsdi.h>
+// clang-format off
+#include <windows.h>
 #include <setupapi.h>
 #include <shlobj.h>
-#include <windows.h>
+#include <hidsdi.h>
+// clang-format on
 #else
 #include <hidapi/hidapi.h>
 #include <sys/file.h>
