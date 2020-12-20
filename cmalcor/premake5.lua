@@ -1,105 +1,90 @@
---[[
-    Use 'premake5 --help' for help
---]]
-
---[[
-    Options and Actions
---]]
-
-newoption {
-    trigger     = "outdir",
-    value       = "path",
-    description = "Output directory for the build files"
-}
-if not _OPTIONS["outdir"] then
-    _OPTIONS["outdir"] = "."
-end
-
 newoption {
     trigger     = "mizar",
     description = "Makes a project that builds the Mizar based library"
 }
 
---[[
-    The Solution
---]]
-solution "CmAlcor"
-
-    configurations { "Release", "Debug" }
+workspace "cmalcor"
     cppdialect "C++17"
-
-    location( _OPTIONS["outdir"] )
-    targetdir (_OPTIONS["outdir"] .. '/' .. "bin")
-    implibdir (_OPTIONS["outdir"] .. '/' .. "bin")
-
     startproject "cmalcor-cli"
 
+    if _OPTIONS["mizar"] then
+        defines "MIZAR_PATCH=1"
+    end
+
+    includedirs "include"
+
+project "cmalcor"
+    language "C++"
+    kind "SharedLib"
+    targetname "cmalcor"
+    
+    defines "CMALCOR_COMPILING"
+
+    files {
+        "include/**.h",
+        "src/**.cpp",
+        "src/**.cc",
+        "src/**.hpp",
+        "src/**.h",
+        "src/**.def",
+    }
+
+    excludes "src/main.cpp"
+
+    filter "system:windows"
+        links { "hid", "setupapi" }
+        
+    filter "system:linux"
+        links "hidapi-hidraw"
+
+project "cmalcor-cli"
+    language "C++"
+    kind "ConsoleApp"
+    targetname "cmalcor"
+    
+    defines "CMALCOR_COMPILING_CLI"
+
+    files {
+        "src/main.cpp",
+        "deps/docopt/docopt.cpp",
+    }
+
+    includedirs "deps/docopt/"
+
+    links "cmalcor"
+
+workspace "*"
+    configurations { "Release", "Debug" }
+    location "build"
+    targetdir "bin"
+    implibdir "bin"
+
     flags {
+        "NoPCH",
         "NoBufferSecurityCheck"
     }
 
-    if _OPTIONS["mizar"] then
-        defines { "MIZAR_PATCH=1" }
-    end
-
-    includedirs { "include" }
-
-    configuration "Debug*"
-        symbols "On"
+filter "configurations:Debug"
+    symbols "On"
         
-    configuration "Release*"
-        defines { "NDEBUG" }
-        optimize "Speed"
+filter "configurations:Release"
+    defines "NDEBUG"
+    symbols "Off"
 
-    filter "system:windows"
-        staticruntime "On"
-        targetprefix "" -- no 'lib' prefix on gcc
-        defines {
-            "_CRT_SECURE_NO_WARNINGS",
-            "_SCL_SECURE_NO_WARNINGS"
-        }
+    optimize "Speed"
+    functionlevellinking "On"
+    flags "LinkTimeOptimization"
 
-    project "cmalcor"
-        language "C++"
-        kind "SharedLib"
-        targetname "cmalcor"
-        
-        defines { "CMALCOR_COMPILING" }
+filter { "toolset:*_xp" }
+    defines { "WINVER=0x0501", "_WIN32_WINNT=0x0501" }
+    buildoptions { "/Zc:threadSafeInit-" }
 
-        flags { "NoPCH" }
+filter { "action:vs*" }
+    defines { "_CRT_SECURE_NO_WARNINGS", "_SCL_SECURE_NO_WARNINGS" }
 
-        files {
-            "include/**.h",
-            "src/**.cpp",
-            "src/**.cc",
-            "src/**.hpp",
-            "src/**.h",
-            "src/**.def",
-        }
+filter { "action:vs*", "platforms:Win32" }
+    buildoptions { "/arch:IA32" } -- disable SSE/SSE2
 
-        excludes { "src/main.cpp" }
-
-        filter "system:windows"
-            links {"hid", "setupapi"}
-            
-        filter "system:linux"
-            links "hidapi-hidraw"
-
-    project "cmalcor-cli"
-        language "C++"
-        kind "ConsoleApp"
-        targetname "cmalcor"
-        
-        defines { "CMALCOR_COMPILING_CLI" }
-
-        flags { "NoPCH" }
-
-        files {
-            "src/main.cpp",
-            "deps/docopt/docopt.cpp",
-        }
- 
-        includedirs { "deps/docopt/" }
-
-        links { "cmalcor" }
-        
+filter "system:windows"
+    staticruntime "On"
+    targetprefix ""

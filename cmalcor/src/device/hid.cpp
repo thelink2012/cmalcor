@@ -1,29 +1,31 @@
 #include "hid.hpp"
-#include <vector>
-#include <iterator>
 #include <cstring>
+#include <iterator>
 #include <mutex>
+#include <vector>
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
+// clang-format off
 #include <windows.h>
 #include <setupapi.h>
 #include <shlobj.h>
 #include <hidsdi.h>
+// clang-format on
 #else
+#include <hidapi/hidapi.h>
 #include <sys/file.h>
 #include <unistd.h>
-#include <hidapi/hidapi.h>
 #endif
 
 auto HidDevice::Open() const -> IoHandle
 {
     if(*this)
     {
-	    #ifdef _WIN32
-	    return OpenWin32();
-	    #else
-	    return OpenPosix();
-	    #endif
+#ifdef _WIN32
+        return OpenWin32();
+#else
+        return OpenPosix();
+#endif
     }
     return IoHandle();
 }
@@ -37,21 +39,30 @@ auto HidDevice::OpenWin32() const -> IoHandle
     wchar_t lockpath[MAX_PATH];
     wchar_t devid[64];
 
-    if(SUCCEEDED(SHGetFolderPathW(nullptr, CSIDL_COMMON_APPDATA | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_DEFAULT, lockpath)))
+    if(SUCCEEDED(SHGetFolderPathW(nullptr,
+                                  CSIDL_COMMON_APPDATA | CSIDL_FLAG_CREATE,
+                                  NULL, SHGFP_TYPE_DEFAULT, lockpath)))
     {
-	    if(swprintf(devid, std::size(devid), L"/device_hid_%X_%X.lock", vendor, product) > 0
-	        && wcscat_s(lockpath, std::size(lockpath), devid) == 0)
-	    {
-	        HANDLE fdLock = CreateFileW(lockpath, GENERIC_READ | GENERIC_WRITE, 0 /*noshare*/, nullptr, OPEN_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, nullptr);
-	        if(fdLock != INVALID_HANDLE_VALUE)
-	        {
-                HANDLE hidDevice = CreateFileW(this->device_path.c_str(), 0, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, 0);
+        if(swprintf(devid, std::size(devid), L"/device_hid_%X_%X.lock", vendor,
+                    product)
+                   > 0
+           && wcscat_s(lockpath, std::size(lockpath), devid) == 0)
+        {
+            HANDLE fdLock = CreateFileW(lockpath, GENERIC_READ | GENERIC_WRITE,
+                                        0 /*noshare*/, nullptr, OPEN_ALWAYS,
+                                        FILE_FLAG_DELETE_ON_CLOSE, nullptr);
+            if(fdLock != INVALID_HANDLE_VALUE)
+            {
+                HANDLE hidDevice = CreateFileW(this->device_path.c_str(), 0,
+                                               FILE_SHARE_READ
+                                                       | FILE_SHARE_WRITE,
+                                               nullptr, OPEN_EXISTING, 0, 0);
                 if(hidDevice != INVALID_HANDLE_VALUE)
                     return IoHandle(hidDevice, fdLock);
 
                 CloseHandle(fdLock);
-	        }
-	    }
+            }
+        }
     }
 
     return IoHandle();
@@ -64,24 +75,28 @@ auto HidDevice::OpenPosix() const -> IoHandle
 
     char lockpath[256];
 
-    if(int written = snprintf(lockpath, std::size(lockpath), "/tmp/device_hid_%X_%X.lock", vendor, product);
-	    written >= 0 && written < std::size(lockpath))
+    if(int written = snprintf(lockpath, std::size(lockpath),
+                              "/tmp/device_hid_%X_%X.lock", vendor, product);
+       written >= 0 && written < std::size(lockpath))
     {
-	    if(int fdLock = open(lockpath, O_RDWR | O_CREAT, S_IRWXU | S_IRGRP | S_IWGRP | S_IROTH);
-		    fdLock != -1)
-	    {
-	        struct flock lock;
-	        memset(&lock, 0, sizeof(lock));
-	        lock.l_type = F_WRLCK;
-	    
-	        if(fcntl(fdLock, F_SETLKW, &lock) == 0)
-	        {
-		        if(hid_device *hidDevice = hid_open_path(this->device_path.c_str()); hidDevice != nullptr)
-		            return IoHandle(hidDevice, fdLock);
-	        }
+        if(int fdLock = open(lockpath, O_RDWR | O_CREAT,
+                             S_IRWXU | S_IRGRP | S_IWGRP | S_IROTH);
+           fdLock != -1)
+        {
+            struct flock lock;
+            memset(&lock, 0, sizeof(lock));
+            lock.l_type = F_WRLCK;
 
-	        close(fdLock);
-	    }
+            if(fcntl(fdLock, F_SETLKW, &lock) == 0)
+            {
+                if(hid_device* hidDevice = hid_open_path(
+                           this->device_path.c_str());
+                   hidDevice != nullptr)
+                    return IoHandle(hidDevice, fdLock);
+            }
+
+            close(fdLock);
+        }
     }
 
     return IoHandle();
@@ -98,7 +113,8 @@ auto HidDevice::ScanForDevice(uint16_t vendor, uint16_t product) -> HidDevice
 }
 
 #ifdef _WIN32
-auto HidDevice::ScanForDeviceWin32(uint16_t vendor, uint16_t product) -> HidDevice
+auto HidDevice::ScanForDeviceWin32(uint16_t vendor, uint16_t product)
+        -> HidDevice
 {
     HidDevice output;
     std::vector<uint8_t> buffer;
@@ -106,7 +122,8 @@ auto HidDevice::ScanForDeviceWin32(uint16_t vendor, uint16_t product) -> HidDevi
 
     HidD_GetHidGuid(&guid);
 
-    HDEVINFO hDevInfo = SetupDiGetClassDevsW(&guid, nullptr, nullptr, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
+    HDEVINFO hDevInfo = SetupDiGetClassDevsW(
+            &guid, nullptr, nullptr, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
     if(hDevInfo != INVALID_HANDLE_VALUE)
     {
         for(uint32_t i = 0; !output; ++i)
@@ -118,18 +135,26 @@ auto HidDevice::ScanForDeviceWin32(uint16_t vendor, uint16_t product) -> HidDevi
             if(!SetupDiEnumDeviceInterfaces(hDevInfo, nullptr, &guid, i, &data))
                 break;
 
-            if(!SetupDiGetDeviceInterfaceDetailW(hDevInfo, &data, nullptr, 0, &required_size, nullptr)
-                && GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+            if(!SetupDiGetDeviceInterfaceDetailW(hDevInfo, &data, nullptr, 0,
+                                                 &required_size, nullptr)
+               && GetLastError() == ERROR_INSUFFICIENT_BUFFER)
             {
                 if(buffer.size() < required_size)
                     buffer.resize(required_size);
 
-                auto& detail = *reinterpret_cast<SP_DEVICE_INTERFACE_DETAIL_DATA_W*>(buffer.data());
+                auto& detail
+                        = *reinterpret_cast<SP_DEVICE_INTERFACE_DETAIL_DATA_W*>(
+                                buffer.data());
                 detail.cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W);
 
-                if(SetupDiGetDeviceInterfaceDetailW(hDevInfo, &data, &detail, buffer.size(), nullptr, nullptr))
+                if(SetupDiGetDeviceInterfaceDetailW(hDevInfo, &data, &detail,
+                                                    buffer.size(), nullptr,
+                                                    nullptr))
                 {
-                    HANDLE hDev = CreateFileW(detail.DevicePath, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, 0);
+                    HANDLE hDev = CreateFileW(
+                            detail.DevicePath, 0,
+                            FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
+                            OPEN_EXISTING, FILE_FLAG_OVERLAPPED, 0);
                     if(hDev != INVALID_HANDLE_VALUE)
                     {
                         HIDD_ATTRIBUTES attrs;
@@ -137,9 +162,13 @@ auto HidDevice::ScanForDeviceWin32(uint16_t vendor, uint16_t product) -> HidDevi
 
                         if(HidD_GetAttributes(hDev, &attrs))
                         {
-                            if(attrs.VendorID == vendor && attrs.ProductID == product)
+                            if(attrs.VendorID == vendor
+                               && attrs.ProductID == product)
                             {
-                                output = HidDevice(static_cast<wchar_t*>(detail.DevicePath), attrs.VendorID, attrs.ProductID);
+                                output = HidDevice(static_cast<wchar_t*>(
+                                                           detail.DevicePath),
+                                                   attrs.VendorID,
+                                                   attrs.ProductID);
                             }
                         }
 
@@ -155,23 +184,25 @@ auto HidDevice::ScanForDeviceWin32(uint16_t vendor, uint16_t product) -> HidDevi
     return output;
 }
 #else
-auto HidDevice::ScanForDevicePosix(uint16_t vendor, uint16_t product) -> HidDevice
+auto HidDevice::ScanForDevicePosix(uint16_t vendor, uint16_t product)
+        -> HidDevice
 {
     static std::once_flag hid_init_flag;
     std::call_once(hid_init_flag, [] {
-	    hid_init();
-	    std::atexit([] { hid_exit(); });
+        hid_init();
+        std::atexit([] { hid_exit(); });
     });
 
     HidDevice output;
-    hid_device_info *hidenum = hid_enumerate(vendor, product);
-    
+    hid_device_info* hidenum = hid_enumerate(vendor, product);
+
     if(hidenum != nullptr)
     {
-        output = HidDevice(hidenum->path == nullptr? "" : hidenum->path, hidenum->vendor_id, hidenum->product_id);
+        output = HidDevice(hidenum->path == nullptr ? "" : hidenum->path,
+                           hidenum->vendor_id, hidenum->product_id);
         hid_free_enumeration(hidenum);
     }
-    
+
     return output;
 }
 #endif
@@ -214,9 +245,9 @@ void HidDevice::IoHandle::ClosePosix()
         struct flock lock;
         memset(&lock, 0, sizeof(lock));
         lock.l_type = F_UNLCK;
-    
+
         fcntl(fdLock, F_SETLKW, &lock);
-    
+
         close(fdLock);
         fdLock = NO_FD_HANDLE;
     }
@@ -233,7 +264,9 @@ bool HidDevice::IoHandle::GetFeature(void* buffer, size_t size) const
 #ifdef _WIN32
     return !!HidD_GetFeature(hidDevice, buffer, size);
 #else
-    return hid_get_feature_report(hidDevice, reinterpret_cast<uint8_t*>(buffer), size) != -1;
+    return hid_get_feature_report(hidDevice, reinterpret_cast<uint8_t*>(buffer),
+                                  size)
+           != -1;
 #endif
 }
 
@@ -242,6 +275,8 @@ bool HidDevice::IoHandle::SetFeature(const void* buffer, size_t size) const
 #ifdef _WIN32
     return !!HidD_SetFeature(hidDevice, (PVOID)(buffer), size);
 #else
-    return hid_send_feature_report(hidDevice, reinterpret_cast<const uint8_t*>(buffer), size) != -1;
+    return hid_send_feature_report(
+                   hidDevice, reinterpret_cast<const uint8_t*>(buffer), size)
+           != -1;
 #endif
 }
