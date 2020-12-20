@@ -1,23 +1,20 @@
-#include <cmalcor.h>
-#include "device/io_alcor.hpp"
 #include "default_settings.hpp"
-
+#include "device/io_alcor.hpp"
+#include <cmalcor.h>
 
 #ifndef MIZAR_PATCH
 #define MIZAR_PATCH 0
 #endif
-
 
 #ifdef _WIN32
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-extern "C" CMALCOR_API
-void CALLBACK CmAlcor_EpEnableCustomLED(HWND, HINSTANCE, LPCSTR, int);
+extern "C" CMALCOR_API void CALLBACK CmAlcor_EpEnableCustomLED(HWND, HINSTANCE,
+                                                               LPCSTR, int);
 
 #endif
-
 
 /*
  * Helpers
@@ -26,7 +23,8 @@ void CALLBACK CmAlcor_EpEnableCustomLED(HWND, HINSTANCE, LPCSTR, int);
 
 static inline void set_error(int* error, int value)
 {
-    if(error) *error = value;
+    if(error)
+        *error = value;
 }
 
 static inline void clear_error(int* error)
@@ -39,7 +37,9 @@ static HidDevice GetDevice()
 #if MIZAR_PATCH
     return HidDevice::ScanForDevice(0x2516, 0x1F);
 #else
-    if(auto newdev = HidDevice::ScanForDevice(0x2516, 0x2D)) // newer versions of the alcor firmware uses this PID/VID
+    if(auto newdev = HidDevice::ScanForDevice(
+               0x2516,
+               0x2D)) // newer versions of the alcor firmware uses this PID/VID
         return newdev;
     else
         return HidDevice::ScanForDevice(0x2516, 0x28);
@@ -55,8 +55,9 @@ static IoAlcorFirmware GetFirmware(int* error, bool safety_checks = true)
         if(firmware)
         {
             uint32_t num2;
-            
-            // safety check is useful to verify if the mouse isn't in a bad state (such as expecting MemoryRead/FlashWrite IO).
+
+            // safety check is useful to verify if the mouse isn't in a bad
+            // state (such as expecting MemoryRead/FlashWrite IO).
             if(!safety_checks || (firmware.GetNumber2(num2) && num2 == 2))
             {
                 return firmware;
@@ -76,10 +77,12 @@ static IoAlcorFirmware GetFirmware(int* error, bool safety_checks = true)
 static bool ValidateSettingOffsets(const uint8_t* settings)
 {
     constexpr size_t check_beg = 0xC;
-    constexpr size_t check_end = MIZAR_PATCH? 0x1A : 0x20; // (end is exclusive)
-    return std::memcmp(settings + check_beg, default_settings + check_beg, check_end - check_beg) == 0;
+    constexpr size_t check_end = MIZAR_PATCH ? 0x1A
+                                             : 0x20; // (end is exclusive)
+    return std::memcmp(settings + check_beg, default_settings + check_beg,
+                       check_end - check_beg)
+           == 0;
 }
-
 
 /*
  * C API
@@ -110,7 +113,7 @@ int CmAlcor_LibraryFlags()
 CMALCOR_API
 int CmAlcor_IsMousePresent()
 {
-    return GetDevice()? 1 : 0;
+    return GetDevice() ? 1 : 0;
 }
 
 CMALCOR_API
@@ -119,7 +122,8 @@ int CmAlcor_GetFirmwareVersion(int* error)
     uint16_t version;
     clear_error(error);
 
-    if(auto alcor = GetFirmware(error, false)) // false is ok on GetFirmwareVersion
+    if(auto alcor = GetFirmware(error,
+                                false)) // false is ok on GetFirmwareVersion
     {
         if(alcor.GetVersion(version))
             return version;
@@ -130,11 +134,12 @@ int CmAlcor_GetFirmwareVersion(int* error)
 }
 
 CMALCOR_API
-int CmAlcor_MemoryRead(int* error, uint32_t begin, uint32_t end_inclusive, void* output)
+int CmAlcor_MemoryRead(int* error, uint32_t begin, uint32_t end_inclusive,
+                       void* output)
 {
     const auto& end = end_inclusive;
     clear_error(error);
-    
+
     if(begin > end || output == nullptr || (begin % 4) != 0 || (end % 4) != 3)
     {
         set_error(error, CMALCOR_ERROR_INVALIDPARAM);
@@ -200,7 +205,8 @@ int CmAlcor_EnableCustomLED(int* error)
     {
         if(auto alcor = GetFirmware(error))
         {
-            bool apply_result = (!MIZAR_PATCH? alcor.DoUnk84_0() : alcor.DoUnk84_1());
+            bool apply_result = (!MIZAR_PATCH ? alcor.DoUnk84_0()
+                                              : alcor.DoUnk84_1());
             if(apply_result && alcor.DoUnk82())
             {
                 return 1;
@@ -227,8 +233,9 @@ int CmAlcor_DisableCustomLED(int* error)
 
     if(auto alcor = GetFirmware(error))
     {
-        // Do note alcor.DoUnk84_1() isn't really necessary but still, reverse what we did to the Alcor.
-        if(alcor.DoUnk82(false) && (MIZAR_PATCH? true : alcor.DoUnk84_1()))
+        // Do note alcor.DoUnk84_1() isn't really necessary but still, reverse
+        // what we did to the Alcor.
+        if(alcor.DoUnk82(false) && (MIZAR_PATCH ? true : alcor.DoUnk84_1()))
         {
             return 1;
         }
@@ -240,26 +247,26 @@ int CmAlcor_DisableCustomLED(int* error)
 }
 
 CMALCOR_API
-int CmAlcor_SetLED(int* error, int mode, int brightness, int red, int green, int blue)
+int CmAlcor_SetLED(int* error, int mode, int brightness, int red, int green,
+                   int blue)
 {
     clear_error(error);
 
-    if(!(mode >= 0 && mode <= 3)
-    || !(brightness >= 0 && brightness <= 10)
-    || !(red >= 0 && red <= 255)
-    || !(green >= 0 && green <= 255)
-    || !(blue >= 0 && blue <= 255))
+    if(!(mode >= 0 && mode <= 3) || !(brightness >= 0 && brightness <= 10)
+       || !(red >= 0 && red <= 255) || !(green >= 0 && green <= 255)
+       || !(blue >= 0 && blue <= 255))
     {
         set_error(error, CMALCOR_ERROR_INVALIDPARAM);
         return 0;
     }
 
-    // On Mizar we need to read then rewrite the entire setting area because it's mostly full of data,
-    // on Alcor we only need to write (not even read) the needed area.
-    constexpr uint32_t addr_settings_begin = MIZAR_PATCH? 0xD800 : 0xD800;
-    constexpr uint32_t addr_settings_end = MIZAR_PATCH? 0xDBFF : 0xD8FF;
+    // On Mizar we need to read then rewrite the entire setting area because
+    // it's mostly full of data, on Alcor we only need to write (not even read)
+    // the needed area.
+    constexpr uint32_t addr_settings_begin = MIZAR_PATCH ? 0xD800 : 0xD800;
+    constexpr uint32_t addr_settings_end = MIZAR_PATCH ? 0xDBFF : 0xD8FF;
 
-    uint8_t settings[MIZAR_PATCH? 0x400 : 0x100];
+    uint8_t settings[MIZAR_PATCH ? 0x400 : 0x100];
     uint16_t host_checksum, device_checksum;
 
     if(MIZAR_PATCH)
@@ -271,14 +278,18 @@ int CmAlcor_SetLED(int* error, int mode, int brightness, int red, int green, int
             return 0;
         }
 
-        static_assert(sizeof(settings) == (addr_settings_end - addr_settings_begin) + 1, "");
-        if(!CmAlcor_MemoryRead(error, addr_settings_begin, addr_settings_end, settings))
+        static_assert(sizeof(settings)
+                              == (addr_settings_end - addr_settings_begin) + 1,
+                      "");
+        if(!CmAlcor_MemoryRead(error, addr_settings_begin, addr_settings_end,
+                               settings))
             return 0;
 
         // already contains settings programmed in?
         if(settings[2] == 0xA5 && settings[3] == 0xA5)
         {
-            // erase magic for the firmware to restore on FlashTellSuccessProgramming.
+            // erase magic for the firmware to restore on
+            // FlashTellSuccessProgramming.
             settings[0] = settings[1] = 0xFF;
             settings[2] = settings[3] = 0xFF;
 
@@ -291,7 +302,8 @@ int CmAlcor_SetLED(int* error, int mode, int brightness, int red, int green, int
         else
         {
             std::memset(settings, 0xFF, sizeof(settings));
-            std::copy(std::begin(default_settings), std::end(default_settings), settings);
+            std::copy(std::begin(default_settings), std::end(default_settings),
+                      settings);
         }
     }
     else
@@ -304,16 +316,19 @@ int CmAlcor_SetLED(int* error, int mode, int brightness, int red, int green, int
         }
 
         std::memset(settings, 0xFF, sizeof(settings));
-        std::copy(std::begin(default_settings), std::end(default_settings), settings);
+        std::copy(std::begin(default_settings), std::end(default_settings),
+                  settings);
     }
 
     if(auto alcor = GetFirmware(error))
     {
-        size_t offset = uint16_t(settings[0x12]) | uint16_t((settings[0x13] << 8) & 0xFF00);
+        size_t offset = uint16_t(settings[0x12])
+                        | uint16_t((settings[0x13] << 8) & 0xFF00);
 
         if(offset + 3 < sizeof(settings))
         {
-            settings[offset + 0] = uint8_t(mode & 0x0F) | uint8_t((brightness & 0x0F) << 4);
+            settings[offset + 0] = uint8_t(mode & 0x0F)
+                                   | uint8_t((brightness & 0x0F) << 4);
             settings[offset + 1] = uint8_t(red);
             settings[offset + 2] = uint8_t(green);
             settings[offset + 3] = uint8_t(blue);
@@ -321,12 +336,20 @@ int CmAlcor_SetLED(int* error, int mode, int brightness, int red, int green, int
             IoAlcorFirmware::UnsafeGuard guard(alcor);
             if(guard)
             {
-                if(alcor.FlashErasePages(addr_settings_begin, addr_settings_end))
+                if(alcor.FlashErasePages(addr_settings_begin,
+                                         addr_settings_end))
                 {
-                    static_assert(sizeof(settings) == (addr_settings_end - addr_settings_begin) + 1, "");
-                    if(alcor.FlashProgram(addr_settings_begin, addr_settings_end, settings, host_checksum))
+                    static_assert(
+                            sizeof(settings)
+                                    == (addr_settings_end - addr_settings_begin)
+                                               + 1,
+                            "");
+                    if(alcor.FlashProgram(addr_settings_begin,
+                                          addr_settings_end, settings,
+                                          host_checksum))
                     {
-                        if(alcor.Checksum(addr_settings_begin, addr_settings_end, device_checksum))
+                        if(alcor.Checksum(addr_settings_begin,
+                                          addr_settings_end, device_checksum))
                         {
                             if(device_checksum == host_checksum)
                             {
@@ -335,7 +358,8 @@ int CmAlcor_SetLED(int* error, int mode, int brightness, int red, int green, int
                                     return 1;
                                 }
                                 else
-                                    set_error(error, CMALCOR_ERROR_BADFLASHTELL);
+                                    set_error(error,
+                                              CMALCOR_ERROR_BADFLASHTELL);
                             }
                             else
                                 set_error(error, CMALCOR_ERROR_BADCHECKSUM);
@@ -360,7 +384,8 @@ int CmAlcor_SetLED(int* error, int mode, int brightness, int red, int green, int
 }
 
 CMALCOR_API
-int CmAlcor_GetLED(int* error, int* mode, int* brightness, int* red, int* green, int* blue)
+int CmAlcor_GetLED(int* error, int* mode, int* brightness, int* red, int* green,
+                   int* blue)
 {
     clear_error(error);
 
@@ -369,7 +394,8 @@ int CmAlcor_GetLED(int* error, int* mode, int* brightness, int* red, int* green,
         IoAlcorFirmware::UnsafeGuard guard(alcor);
         if(guard)
         {
-            uint8_t settings[0x100]; // only needs top area, where it contains the led data
+            uint8_t settings[0x100]; // only needs top area, where it contains
+                                     // the led data
 
             static_assert(sizeof(settings) == (0xD8FF - 0xD800) + 1, "");
             if(alcor.MemoryRead(0xD800, 0xD8FF, settings))
@@ -377,25 +403,31 @@ int CmAlcor_GetLED(int* error, int* mode, int* brightness, int* red, int* green,
                 // already contains settings?
                 if(settings[2] == 0xA5 && settings[3] == 0xA5)
                 {
-                    size_t offset = uint16_t(settings[0x12]) | uint16_t((settings[0x13] << 8) & 0xFF00);
-                    
+                    size_t offset = uint16_t(settings[0x12])
+                                    | uint16_t((settings[0x13] << 8) & 0xFF00);
+
                     if(offset + 3 < sizeof(settings))
                     {
                         if(mode)
                         {
                             *mode = settings[offset + 0] & 0x0F;
-                            *mode = (*mode >= 0 && *mode <= 3? *mode : 1);
+                            *mode = (*mode >= 0 && *mode <= 3 ? *mode : 1);
                         }
 
                         if(brightness)
                         {
                             *brightness = (settings[offset + 0] >> 4) & 0x0F;
-                            *brightness = (*brightness >= 0 && *brightness <= 10? *brightness : 10);
+                            *brightness = (*brightness >= 0 && *brightness <= 10
+                                                   ? *brightness
+                                                   : 10);
                         }
-                        
-                        if(red) *red = settings[offset + 1];
-                        if(green) *green = settings[offset + 2];
-                        if(blue) *blue = settings[offset + 3];
+
+                        if(red)
+                            *red = settings[offset + 1];
+                        if(green)
+                            *green = settings[offset + 2];
+                        if(blue)
+                            *blue = settings[offset + 3];
 
                         return 1;
                     }
@@ -404,7 +436,8 @@ int CmAlcor_GetLED(int* error, int* mode, int* brightness, int* red, int* green,
                 }
                 else
                 {
-                    // this is not a error, but there's no custom led configuration flashed on the device.
+                    // this is not a error, but there's no custom led
+                    // configuration flashed on the device.
                     return 0;
                 }
             }
@@ -451,7 +484,6 @@ void CALLBACK CmAlcor_EpEnableCustomLED(HWND, HINSTANCE, LPCSTR, int)
 }
 #endif
 
-
 template<size_t N>
 static constexpr std::pair<const char*, size_t> SzArray(const char (&p)[N])
 {
@@ -481,7 +513,8 @@ int CmAlcor_ErrorToString(int error, char* buffer, size_t max_size)
             msg = SzArray("Device is not connected on the system.");
             break;
         case CMALCOR_ERROR_DEVICELOCKED:
-            msg = SzArray("User has insufficient permission to access device or it's locked by another process.");
+            msg = SzArray("User has insufficient permission to access device "
+                          "or it's locked by another process.");
             break;
         case CMALCOR_ERROR_BADSTATE:
             msg = SzArray("Device firmware IO is in a bad state.");
@@ -496,25 +529,30 @@ int CmAlcor_ErrorToString(int error, char* buffer, size_t max_size)
             msg = SzArray("Failed to flash erase the device.");
             break;
         case CMALCOR_ERROR_BADFLASHPROGRAM:
-            msg = SzArray("Failed to program something into the device memory.");
+            msg = SzArray(
+                    "Failed to program something into the device memory.");
             break;
         case CMALCOR_ERROR_BADFLASHCHECKSUM:
-            msg = SzArray("Failed to retrieve the checksum, from the device, for a write operation.");
+            msg = SzArray("Failed to retrieve the checksum, from the device, "
+                          "for a write operation.");
             break;
         case CMALCOR_ERROR_BADCHECKSUM:
             msg = SzArray("Checksum mismatch between the device and the host.");
             break;
         case CMALCOR_ERROR_BADFLASHTELL:
-            msg = SzArray("Failed to tell the device about the success of a flash programming operation.");
+            msg = SzArray("Failed to tell the device about the success of a "
+                          "flash programming operation.");
             break;
         case CMALCOR_ERROR_BADFLASHREAD:
             msg = SzArray("Failed to read from the device memory.");
             break;
         case CMALCOR_ERROR_NOLEDCONFIG:
-            msg = SzArray("Couldn't complete operation because there's no LED configuration programmed on the device.");
+            msg = SzArray("Couldn't complete operation because there's no LED "
+                          "configuration programmed on the device.");
             break;
         case CMALCOR_ERROR_BADSETTING:
-            msg = SzArray("The settings on the mouse are ill-formed (most likely offsets out of range).");
+            msg = SzArray("The settings on the mouse are ill-formed (most "
+                          "likely offsets out of range).");
             break;
     }
 
@@ -528,8 +566,9 @@ int CmAlcor_ErrorToString(int error, char* buffer, size_t max_size)
         {
             if(msg.second <= max_size)
             {
-                std::memcpy(buffer, msg.first, msg.second); // includes null terminator
-                return (int) msg.second;
+                std::memcpy(buffer, msg.first,
+                            msg.second); // includes null terminator
+                return (int)msg.second;
             }
         }
     }

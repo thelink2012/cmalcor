@@ -1,18 +1,18 @@
-#include <cstdio>
-#include <stdexcept>
-#include <memory>
-#include <string>
 #include <cmalcor.h>
+#include <cstdio>
 #include <docopt.h>
+#include <memory>
+#include <stdexcept>
+#include <string>
 #ifdef _WIN32
-#include <io.h>
 #include <fcntl.h>
+#include <io.h>
 #endif
 
 static const char VERSION[] = CMALCOR_CAPI_VERSION_STRING;
 
 static const char USAGE[] =
-R"(CM Storm Alcor CLI Software.
+        R"(CM Storm Alcor CLI Software.
 
    Usage:
       cmalcor is-present
@@ -38,9 +38,7 @@ R"(CM Storm Alcor CLI Software.
 
 struct AppException : std::runtime_error
 {
-    AppException(const std::string& msg)
-        : std::runtime_error(msg)
-    {}
+    AppException(const std::string& msg) : std::runtime_error(msg) {}
 };
 
 void verify(int error)
@@ -87,24 +85,25 @@ void write(const void* buffer, size_t size)
 int main(int argc, char* argv[])
 {
     int error = CMALCOR_ERROR_NOERROR;
-    auto args = docopt::docopt(USAGE, { argv+1, argv+argc }, true, VERSION);
+    auto args = docopt::docopt(USAGE, {argv + 1, argv + argc}, true, VERSION);
 
     try
     {
         if(args["is-present"].asBool())
         {
-            return CmAlcor_IsMousePresent()? EXIT_SUCCESS : EXIT_FAILURE;
+            return CmAlcor_IsMousePresent() ? EXIT_SUCCESS : EXIT_FAILURE;
         }
         else if(args["firmware-version"].asBool())
         {
             int version = CmAlcor_GetFirmwareVersion(&error);
             verify(error);
-            printf("%d.%d.%d.%d\n", (version >> 12) & 0xF, (version >> 8) & 0xF, (version >> 4) & 0xF, (version >> 0) & 0xF);
+            printf("%d.%d.%d.%d\n", (version >> 12) & 0xF, (version >> 8) & 0xF,
+                   (version >> 4) & 0xF, (version >> 0) & 0xF);
         }
         else if(args["memory-read"].asBool())
         {
-            auto begin = (uint32_t) std::stoul(args["<begin>"].asString(), 0, 0);
-            auto end   = (uint32_t) std::stoul(args["<end>"].asString(), 0, 0);
+            auto begin = (uint32_t)std::stoul(args["<begin>"].asString(), 0, 0);
+            auto end = (uint32_t)std::stoul(args["<end>"].asString(), 0, 0);
             verify_address(begin, end);
 
             static const size_t buffer_size = (end - begin) + 1;
@@ -134,7 +133,8 @@ int main(int argc, char* argv[])
         {
             if(args["--force"].asBool())
             {
-                auto begin = (uint32_t)std::stoul(args["<begin>"].asString(), 0, 0);
+                auto begin = (uint32_t)std::stoul(args["<begin>"].asString(), 0,
+                                                  0);
                 auto end = (uint32_t)std::stoul(args["<end>"].asString(), 0, 0);
                 verify_address(begin, end);
 
@@ -143,8 +143,11 @@ int main(int argc, char* argv[])
             }
             else
             {
-                throw AppException("Before doing a flash-erase, specially on the settings region, make sure you've disabled the custom LED!\n"
-                                   "Due to the highly unsafety of this operation, the --force parameter is required.");
+                throw AppException(
+                        "Before doing a flash-erase, specially on the settings "
+                        "region, make sure you've disabled the custom LED!\n"
+                        "Due to the highly unsafety of this operation, the "
+                        "--force parameter is required.");
             }
         }
         else if(args["enable-custom-led"].asBool())
@@ -188,7 +191,7 @@ int main(int argc, char* argv[])
         {
             auto has_config = CmAlcor_HasLEDConfig(&error);
             verify(error);
-            return has_config? EXIT_SUCCESS : EXIT_FAILURE;
+            return has_config ? EXIT_SUCCESS : EXIT_FAILURE;
         }
         else
         {
@@ -206,4 +209,3 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 }
-
