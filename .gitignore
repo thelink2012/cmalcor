@@ -1,4 +1,5 @@
 /bin/
+build/
 /cmalcor-gui/bin/
 /cmalcor-gui/obj/
 /cmalcor/bin/

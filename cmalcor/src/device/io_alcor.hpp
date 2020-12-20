@@ -10,12 +10,12 @@ private:
 
     HidDevice::IoHandle io;
 
-    static const uint32_t feature_size = 65;
-    static const uint32_t bytes_step = feature_size - 1; // minus report id
+    static constexpr uint32_t feature_size = 65;
+    static constexpr uint32_t bytes_step = feature_size - 1; // minus report id
 
-    static const uint8_t made_request = 0xFB;
-    static const uint8_t success_request = 0xFA;
-    static const uint8_t failed_request = 0xFE;
+    static constexpr uint8_t made_request = 0xFB;
+    static constexpr uint8_t success_request = 0xFA;
+    static constexpr uint8_t failed_request = 0xFE;
 
 public:
     struct Unsafeguard;
