@@ -1,8 +1,7 @@
 #pragma once
-#include <hidapi/hidapi.h>
 #include <cassert>
 #include <cstdint>
-#include <string>
+#include <filesystem>
 
 ///
 /// Represents the identification for a HID Device.
@@ -21,7 +20,7 @@ public:
     /// Whether this object represents a device.
     explicit operator bool() const
     {
-        return !device.empty();
+        return !device_path.empty();
     }
 
     /// Locks the device access (but only for users of this library) and returns a I/O handle to it.
@@ -31,11 +30,11 @@ public:
     static HidDevice ScanForDevice(uint16_t vendor, uint16_t product);
 
 private:
-    std::string device;
+    std::filesystem::path device_path;
     uint16_t vendor, product;
 
-    explicit HidDevice(std::string device_path, uint16_t vendor, uint16_t product) :
-        device(std::move(device_path)), vendor(vendor), product(product)
+    explicit HidDevice(std::filesystem::path device_path, uint16_t vendor, uint16_t product) :
+        device_path(std::move(device_path)), vendor(vendor), product(product)
     {
         assert(!!*this);
     }
@@ -43,12 +42,15 @@ private:
     IoHandle OpenWin32() const;
     IoHandle OpenPosix() const;
 
+    static HidDevice ScanForDeviceWin32(uint16_t vendor, uint16_t product);
+    static HidDevice ScanForDevicePosix(uint16_t vendor, uint16_t product);
+
 public:
     /// Open device ready for I/O.
     class IoHandle
     {
     public:
-        IoHandle() : pDev(0), fdLock(-1)
+        IoHandle() : hidDevice(NO_HID_HANDLE), fdLock(NO_FD_HANDLE)
         {}
 
         IoHandle(const IoHandle&) = delete;
@@ -61,10 +63,10 @@ public:
 
         IoHandle& operator=(IoHandle&& rhs)
         {
-            this->pDev = rhs.pDev;
+            this->hidDevice = rhs.hidDevice;
             this->fdLock = rhs.fdLock;
-            rhs.pDev = 0;
-            rhs.fdLock = FdHandle(-1);
+            rhs.hidDevice = NO_HID_HANDLE;
+            rhs.fdLock = NO_FD_HANDLE;
             return *this;
         }
 
@@ -85,19 +87,25 @@ public:
         friend class HidDevice;
         #ifdef _WIN32
         using FdHandle = void*;
+        using HidHandle = void*;
+        static constexpr FdHandle NO_FD_HANDLE = FdHandle(-1);
+        static constexpr HidHandle NO_HID_HANDLE = nullptr;
         #else
         using FdHandle = int;
+        using HidHandle = struct hid_device_*;
+        static constexpr FdHandle NO_FD_HANDLE = -1;
+        static constexpr HidHandle NO_HID_HANDLE = nullptr;
         #endif
 
-        hid_device *pDev;
+        HidHandle hidDevice;
         FdHandle fdLock;
 
-        explicit IoHandle(hid_device *pDev, FdHandle fdLock) :
-            pDev(pDev), fdLock(fdLock)
+        explicit IoHandle(HidHandle hidDevice, FdHandle fdLock) :
+            hidDevice(hidDevice), fdLock(fdLock)
         {}
 
     private:
-	void CloseWin32Lock();
-	void ClosePosixLock();
+	    void CloseWin32();
+	    void ClosePosix();
     };
 };

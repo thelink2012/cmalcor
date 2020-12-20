@@ -80,7 +80,7 @@ solution "CmAlcor"
         excludes { "src/main.cpp" }
 
         filter "system:windows"
-            links "hidapi"
+            links {"hid", "setupapi"}
             
         filter "system:linux"
             links "hidapi-hidraw"

@@ -6,6 +6,7 @@
 /cmalcor/build_temp/
 *.db
 *.opendb
+.vs/
 
 #################
 ## C++
